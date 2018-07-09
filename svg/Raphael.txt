@@ -1,0 +1,62 @@
+SVG——标签、样式、JS(createElementNS)
+VML
+
+--------------------------------------------------------------------------------
+
+想用VML：
+1.加个xmlns
+  <html xmlns:v="urn:schemas-microsoft-com:vml">
+2.加个样式
+  <style>
+  v\:* { behavior: url(#default#VML); position:absolute }
+  </style>
+
+--------------------------------------------------------------------------------
+
+1.vml和svg差不多    IE5~IE7
+2.xmlns+style
+3.vml也有很多标签
+
+--------------------------------------------------------------------------------
+
+line        线           from to
+oval        椭圆         style="left,top,width,height"        position:absolute
+rect        矩形         style="left,top,width,height"        position:absolute
+
+--------------------------------------------------------------------------------
+
+<v:shape style="width:1000px;height:1000px" path="M xx xx L xx xx"></v:shape>
+
+<v:shape style="width:1129px;height:1015px;" coordsize="1129,1015"></v:shape>
+
+--------------------------------------------------------------------------------
+
+Raphael.js：
+1.兼容VML和SVG
+2.扩展功能——动画
+
+--------------------------------------------------------------------------------
+
+//1.创建画布
+let paper=Raphael(x,y,width,height);
+
+//2.创建形状
+let rect=paper.rect(x,y,width,height);
+
+//3.设置属性(样式)
+rect.attr({fill: 'red', stroke: 'green'});
+
+//4.事件
+rect.click(fn);
+rect.unclick(fn);
+
+--------------------------------------------------------------------------------
+
+平面绘图：
+1.canvas
+2.SVG/VML
+3.Raphael
+4.echarts   百度
+5.d3        阿里
+
+--------------------------------------------------------------------------------

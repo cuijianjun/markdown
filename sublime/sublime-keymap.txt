@@ -1,5 +1,25 @@
 sublime 本机快捷键
 
+
+格式化代码
+ctrl+alt+h html
+ctrl+alt+j javascript
+ctrl+alt+c css
+ctrl+alt+p php
+ctrl+alt+r ruby
+ctrl+alt++shift+p python
+新建文件
+ctrl+alt+N 
+
+整行的上下移动: ctrl+shift+↑或 ctrl+shift+↓
+复制行或选中项: ctrl+shift+d
+增加和减少缩进: ctrl+[ 或 ]
+粘贴并复制格式: ctrl+shift+v
+File Switching （文件切换） ctrl + p
+
+当你编辑一个大文件时，文件中有一堆方法，按Ctrl + R将其全部列出来，使他们更容易找到。开始尝试的输入你想要的，然后按Enter 就可以快速跳转这个方法了。
+使用方法：按Ctrl+ R
+
 格式化代码 Cmd+Shift+H
 1. Ctrl+L             选择整行（按住-继续选择下行） 
 2. Ctrl+Shift+K(shhift+del)     删除整行，  ctrl + KK 从光标处删之行尾，Ctrl+K Backspace 从光标处删除至行首
@@ -31,3 +51,17 @@ sublime 本机快捷键
 28. ctrl + F3:        跳转到下一个选中的词	
 29. Ctrl+Shift+P Set Syntax:html : 设置文件类型
 30. Shift + 右键:     连续多行光标选中 (by Gary Gauh)
+
+
+
+不仅主题可以更换，图标也可以。在Dribbble上有大量重新设计的Sublime Text精美图标。更换方法：
+
+下载一个图标，有.icns格式的最好。如果没有，用iConvert转换之。
+终端执行：open /Applications/Sublime\ Text.app/Contents/Resources/
+替换Sublime Text 3.icns或Sublime Text 2.icns文件。
+
+
+
+2.创建以点开头的文件
+
+开个终端，到你想创建目录的地方 mkdir .xxxx

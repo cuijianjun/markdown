@@ -29,3 +29,11 @@ nginx -t 测试nginx.conf配置
 
 
 export PATH="/usr/local/opt/openssl/bin:$PATH"'
+
+
+
+
+
+sudo nginx configtest. 测试配置文件的正确性
+
+configtest, start, stop, restart 配置，开始，停止，重启

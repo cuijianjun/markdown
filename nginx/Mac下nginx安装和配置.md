@@ -12,6 +12,8 @@ nginx -s reload 重新加载
 
 nginx -t 测试nginx.conf配置
 
+Please use configtest, start, stop, restart or status as first argument
+
 
 
 /usr/local/etc/nginx/nginx.conf （配置文件路径）

@@ -1,0 +1,187 @@
+【例13.1】使用root用户登录到本地mysql服务器的test库中
+mysql -uroot -p -hlocalhost test
+
+【例13.2】使用root用户登录到本地mysql服务器的test库中，执行一条查询语句
+mysql -uroot -p -hlocalhost test -e "DESC person;"
+
+【例13.3】使用CREATE USER创建一个用户，用户名是jeffrey，密码是mypass，主机名是localhost
+CREATE USER 'jeffrey'@'localhost' IDENTIFIED BY 'mypass';
+
+【例13.4】使用GRANT语句创建一个新的用户testUser，密码为testpwd。用户 testUser对所有的数据有查询和更新权限，并授于对所有数据表的SELECT和UPDATE权限
+GRANT SELECT,UPDATE  ON *.* TO 'testUser'@'localhost' IDENTIFIED BY 'testpwd';    /*创建账户并授予权限*/
+SELECT Host,User,Select_priv,Update_priv, FROM mysql.user where user='testUser';  /*查看账户权限信息*/
+
+【例13.5】使用INSERT创建一个新账户，其用户名称为customer1，主机名称为localhost，密码为customer1：
+INSERT INTO user (Host,User,Password) VALUES('localhost','customer1',PASSWORD('customer1'));
+
+【例13.6】使用DROP USER删除用户'jeffrey'@'localhost'
+DROP USER 'jeffrey'@'localhost';
+
+【例13.7】使用DELETE删除用户'customer1'@'localhost'
+DELETE FROM mysql.user WHERE host='localhost' and user='customer1';
+
+
+【例13.8】使用mysqladmin将root用户的密码修改为“rootpwd”
+mysqladmin -u root -p password "123456"
+
+【例13.9】使用UPDATE语句将root用户的密码修改为“rootpwd2”：
+UPDATE mysql.user set Password=password("rootpwd2")
+WHERE User="root" and Host="localhost";
+
+【例13.10】使用SET语句将root用户的密码修改为“rootpwd3”：
+SET PASSWORD=password("rootpwd3");
+
+【例13.11】使用SET语句将testUser用户的密码修改为“newpwd”：
+SET PASSWORD FOR 'testUser'@'localhost'=password("newpwd");
+
+【例13.12】使用UPDATE语句将testUser用户的密码修改为“newpwd2”：
+UPDATE   mysql.user set Password=PASSWORD("newpwd2")
+WHERE User="testUser" and Host="localhost";
+
+【例13.13】使用GRANT语句将testUser用户的密码修改为“newpwd3”：
+GRANT USAGE ON *.* TO 'testUser'@'localhost' IDENTIFIED BY 'newpwd3';
+
+【例13.14】testUser用户使用SET语句将自身的密码修改为“newpwd4”：
+SET PASSWORD = PASSWORD("newpwd4");
+【例13.15】使用GRANT语句创建一个新的用户grantUser，密码为“grantpwd”。用户grantUser对所有的数据有查询、插入权限，并授于GRANT权限。GRANT语句及其执行结果如下：
+MySQL> GRANT SELECT,INSERT ON *.* TO 'grantUser'@'localhost'  IDENTIFIED BY 'grantpwd' WITH GRANT OPTION;
+Query OK, 0 rows affected (0.03 sec)
+结果显示执行成功，使用SELECT语句查询用户testUser2的权限：
+MySQL> SELECT Host,User,Select_priv,Insert_priv, Grant_priv FROM mysql.user where user='grantUser';
++-----------+------------+-------------+--------------+-------------+
+| Host    | User    | Select_priv | Insert_priv | Grant_priv |
++-----------+------------+-------------+--------------+--------------+
+| localhost | testUser2 | Y        | Y        | Y        |
++-----------+------------+-------------+--------------+--------------+
+1 row in set (0.00 sec)
+【例13.16】使用REVOKE语句取消用户testUser的更新权限。REVOKE语句及其执行结果如下：
+MySQL> REVOKE UPDATE ON *.* FROM 'testUser'@'localhost';
+Query OK, 0 rows affected (0.00 sec)
+执行结果显示执行成功，使用SELECT语句查询用户test的权限：
+MySQL> SELECT Host,User,Select_priv,Update_priv,Grant_priv FROM MySQL.user where user='testUser';
++-----------+------+--------------+---------------+--------------+
+| Host    | User | Select_priv | Update_priv | Grant_priv |
++-----------+------+--------------+---------------+--------------+
+| localhost | test  | Y       | N         | Y        |
++-----------+------+-------------+---------------+--------------+
+1 row in set (0.00 sec)
+【例13.17】使用SHOW GRANTS语句查询用户testUser的权限信息。SHOW GRANTS语句及其执行结果如下：
+MySQL> SHOW GRANTS FOR 'testUser'@'localhost';
++------------------------------------------------------------------------------------------------------------------------------+
+| Grants for testUser@localhost                                                            |
++------------------------------------------------------------------------------------------------------------------------------+
+| GRANT SELECT ON *.* TO 'testUser'@'localhost' IDENTIFIED BY PASSWORD 
+'*53835E70E1FC57BE1A455169C761A8778D307C81' WITH GRANT OPTION                   |
++------------------------------------------------------------------------------------------------------------------------------+
+1 row in set (0.00 sec)
+2. 案例操作过程
+  打开MySQL客户端工具，输入登录命令，登录MySQL。
+C:\>mysql -u root -p
+Enter password: **
+输入正确密码，按回车，出现欢迎信息表示登录成功。
+  选择mysql数据库为当前数据库。
+MySQL> use mysql;
+Database changed
+出现Database changed信息表明切换数据库成功。
+  创建新账户，用户名称为newAdmin，密码为pw1，允许其从本地主机访问MySQL。
+使用GRANT语句创建新账户，创建过程如下：
+MySQL> GRANT SELECT, UPDATE(id, name, age)
+    -> ON test_db.person_old
+    -> TO 'newAdmin'@'localhost' IDENTIFIED BY 'pw1'
+    -> WITH MAX_CONNECTIONS_PER_HOUR 30;
+Query OK, 0 rows affected (0.06 sec)
+提示消息可以看到，语句执行成功。
+  分别从user表中查看新账户的账户信息，从tables_priv和columns_priv表中查看权限信息。
+用户账户创建完成之后，账户信息已经保存在user表，权限信息则分别保存在tables_priv和columns_priv中，查询user名称为newAdmin的账户信息，执行过程如下：
+SELECT host, user, select_priv, update_priv FROM user WHERE user='newAdmin';
+
+SELECT host, db, user, table_name, table_priv, column_priv 
+FROM tables_priv WHERE user='newAdmin';
+
+SELECT host, db, user, table_name, column_name, column_priv 
+FROM columns_priv WHERE user='newAdmin';
+3条SQL语句的查询结果分别如下：
+MySQL> SELECT host, user, select_priv, update_priv FROM user WHERE user='newAdmin';
++-----------+--------------+-------------+--------------+
+| host    | user      | select_priv | update_priv |
++-----------+--------------+-------------+--------------+
+| localhost | newAdmin | N       | N         |
++-----------+--------------+-------------+--------------+
+1 row in set (0.00 sec)
+
+MySQL> SELECT host, db, user, table_name, table_priv, column_priv
+    -> FROM tables_priv WHERE user='newAdmin';
++-----------+-----+-------------+-------------+-------------+---------------+
+| host    | db  | user     | table_name | table_priv | column_priv |
++-----------+-----+-------------+-------------+-------------+---------------+
+| localhost | test | newAdmin | person   | Select    | Update     |
++-----------+-----+-------------+-------------+-------------+---------------+
+1 row in set (0.00 sec)
+
+MySQL> SELECT host, db, user, table_name, column_name, column_priv
+    -> FROM columns_priv WHERE user='newAdmin';
++-----------+-----+-------------+-------------+-----------------+----------------+
+| host    | db  | user     | table_name | column_name | column_priv |
++-----------+-----+-------------+-------------+-----------------+----------------+
+| localhost | test | newAdmin | person   | id          | Update      |
+| localhost | test | newAdmin | person   | name        | Update     |
+| localhost | test | newAdmin | person   | age         | Update      |
++-----------+-----+-------------+-------------+-----------------+----------------+
+3 rows in set (0.00 sec)
+  使用SHOW GRANTS语句查看newAdmin的权限信息。
+查看newAdmin账户的权限信息，输入语句如下：
+SHOW GRANTS FOR 'newAdmin'@'localhost';
+执行结果如下：
++-----------------------------------------------------------------------------------------------------------------------+
+| Grants for newAdmin@localhost                                                     |
++-----------------------------------------------------------------------------------------------------------------------+
+| GRANT USAGE ON *.* TO 'newAdmin'@'localhost' IDENTIFIED BY PASSWORD '*2B602296
+A79E0A8784ACC5C88D92E46588CCA3C3' WITH MAX_CONNECTIONS_PER_HOUR 30    |
+| GRANT SELECT, UPDATE (age, id, name) ON `test`.`person` TO 'newAdmin'@'localhost'      |
++-----------------------------------------------------------------------------------------------------------------------+
+2 rows in set (0.00 sec)
+  使用newAdmin用户登录MySQL。
+退出当前登录，使用EXIT命令，语句如下：
+MySQL> exit
+Bye
+使用newAdmin账户登录MySQL，语句如下：
+C:\>MySQL -u newAdmin -p
+Enter password: ***
+输入密码正确后，出现“mysql>”提示符，登录成功。
+  使用newAdmin用户查看test_db数据库中person_dd表中的数据。
+newAdmin用户被授予test数据库中person表中3个字段上的查询权限，因此可以执行SELECT语句查看这几个字段的值，执行过程如下：
+MySQL> SELECT * FROM test_db.person_dd LIMIT 5;
++----+----------+-----+--------------+
+| id  | name  | age | info       |
++----+----------+-----+--------------+
+|  1 | Green  |  21 | Lawyer   |
+|  2 | Suse   |  22 | dancer    |
+|  3 | Mary  |  24 | Musician  |
+|  4 | Willam |  20 | sports man |
+|  5 | Laura  |  25 | NULL    |
++----+----------+-----+--------------+
+5 rows in set (0.00 sec)
+可以看到，查询结果显示了表中的前5条记录。
+  使用newAdmin用户向person_dd表中插入一条新记录，查看语句执行结果。
+插入新记录，输入语句如下：
+INSERT INTO test_db.person_old(name, age,info) VALUES('gaga', 30);
+执行结果如下：
+ERROR 1142 (42000): INSERT command denied to user 'newAdmin'@'localhost' for table 'person'
+可以看到，语句不能执行，错误信息表明newAdmin用户不能对person表进行插入操作。因此，用户不可以执行没有被授权的操作语句。
+  退出当前登录，使用root用户重新登录，收回newAdmin账户的权限。
+输入退出命令：
+exit
+重新以root用户登录MySQL，并选择mysql数据库为当前数据库。
+输入语句收回newAdmin账户的权限，执行过程如下：
+REVOKE SELECT, UPDATE ON test.person FROM 'newAdmin'@'localhost';
+执行结果如下：
+MySQL> REVOKE SELECT, UPDATE ON test.person FROM 'newAdmin'@'localhost';
+Query OK, 0 rows affected (0.00 sec)
+  删除newAdmin的账户信息。
+删除指定账户，可以使用DROP USER语句，输入如下：
+DROP USER 'newAdmin'@'localhost';
+语句执行成功之后，tables_priv和columns_priv中相关的记录将被删除。
+
+
+
+

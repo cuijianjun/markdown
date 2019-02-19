@@ -1,0 +1,71 @@
+步骤1：设置启动二进制日志，并指定二进制日志文件名为binlog.log
+打开my.ini（或者my.cnf）在[mysqld]组下添加如下内容：
+[mysqld]
+log-bin=binlog.log
+net stop mysql 
+net start mysql
+
+步骤2：将二进制日志文件存储路径改为d:/log
+打开my.ini（或者my.cnf）在[mysqld]组下修改如下内容：
+[mysqld]
+log-bin=d:/log/binlog.log
+net stop mysql 
+net start mysql
+
+步骤3：查看flush logs对二进制日志的影响。
+mysqladmin flush-logs
+FLUSH LOGS;
+
+步骤4：查看二进制日志。
+mysqlbinlog d:\log\binlog.000001
+
+步骤5：使用二进制日志还原数据
+USE test
+CREATE TABLE member(id INT AUTO_INCREMENT PRIMARY KEY,  name VARCHAR(50));   /*创建数据库*/
+INSERT INTO member VALUES(NULL, 'Playboy1');
+INSERT INTO member VALUES(NULL, 'Playboy2');
+SET SQL_LOG_BIN=0;    /*暂停二进制日志功能*/
+drop table member;    /*删除数据表*/
+SELECT * FROM member;
+SET SQL_LOG_BIN=1;   /*打开二进制日志功能*/
+mysqlbinlog d:/log/binlog.0000001 | mysql -u root -p   /*还原数据表*/
+SELECT * FROM member;
+
+
+步骤6：删除二进制日志
+RESET MASTER;
+
+步骤7：暂停和重新启动二进制日志
+SET sql_log_bin = 0;   /*暂停日志*/
+SET sql_log_bin =1;    /*打开日志*/
+
+步骤8：设置启动错误日志。
+[mysqld]
+log-error
+
+步骤9：设置错误日志的文件为d:/log/error_log.err
+[mysqld]
+log-error=d:/log/error_log.err
+
+步骤10：查看错误日志。
+略
+
+步骤11：设置启动通用查询日志，并且设置通用查询日志文件为：d:/log/ gneral_query.log。
+[mysqld]
+log =d:/log/general_query.log
+
+步骤13：设置启动慢查询日志，设置慢查询日志的文件为d:/log/ slow_query.log，并设置记录查询时间超过3秒的语句。
+[mysqld]
+log-slow-queries=d:/log/slow_query.log
+long_query_time=3
+
+
+步骤14：查看慢查询日志。
+略
+
+
+
+
+
+
+

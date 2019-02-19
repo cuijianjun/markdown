@@ -1,0 +1,28 @@
+步骤1：使用mysqldump命令将suppliers表备份到文件C:\bktestdir\suppliers_bk.sql。
+mysqldump -u root -p test suppliers > C:\bktestdir\suppliers_bk.sql
+
+步骤2：使用mysql命令还原suppliers表到test数据库中
+DELETE FROM suppliers;
+source C:/bktestdir/suppliers_bk.sql;
+
+步骤3：使用SELECT… INTO OUTFILE语句导出suppliers表中的记录，导出文件位于目录C:\bktestdir下，名称为suppliers_out.txt
+SELECT * FROM test.suppliers INTO OUTFILE "C:/bktestdir/suppliers_out.txt"
+  FIELDS
+    TERMINATED BY ','
+    ENCLOSED BY '\"'
+  LINES
+    STARTING BY '<'
+    TERMINATED BY '>\r\n';
+
+步骤4：使用LOAD DATA INFILE语句导入suppliers_out.txt数据到suppliers表。
+LOAD DATA INFILE 'C:/bktestdir/suppliers_out.txt' INTO TABLE test.suppliers
+  FIELDS
+    TERMINATED BY ','
+    ENCLOSED BY '\"'
+  LINES
+    STARTING BY '<'
+    TERMINATED BY '>\r\n';
+
+步骤5：使用musqldump命令将suppliers表中的记录导出到文件C:\bktestdir\suppliers_html.html。
+mysql -u root -p --html --execute="SELECT * FROM suppliers;" test > C:/bktestdir/suppliers_html.html
+

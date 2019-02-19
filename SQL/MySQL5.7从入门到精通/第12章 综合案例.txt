@@ -1,0 +1,15 @@
+步骤1：创建persons表
+CREATE TABLE persons (name VARCHAR(40), num int);
+
+步骤2：创建一个销售额表sales
+CREATE TABLE sales (name VARCHAR(40), sum int);
+
+步骤3：创建一个触发器
+CREATE TRIGGER num_sum AFTER INSERT ON persons
+FOR EACH ROW INSERT INTO sales VALUES (NEW.name,7*NEW.num);
+
+步骤4：向persons表中插入记录
+INSERT INTO persons VALUES ('xiaoxiao',20),('xiaohua',69);
+
+SELECT * FROM persons;
+SELECT *FROM sales;

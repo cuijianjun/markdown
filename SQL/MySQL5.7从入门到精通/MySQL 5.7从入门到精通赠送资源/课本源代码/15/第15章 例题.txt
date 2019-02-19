@@ -1,0 +1,76 @@
+【例15.1】使用SHOW VARIABLES语句查询日志设置，执行的语句及结果如下：
+ SHOW VARIABLES LIKE 'log_%' ;
+【例15.2】使用SHOW BINARY LOGS将查看二进制日志文件个数及文件名，执行命令及结果如下：
+ SHOW BINARY LOGS;
+
+【例15.3】使用mysqlbinlog查看二进制日志，执行命令及结果如下：
+C:\> mysqlbinlog D:/MySQL/log/binlog.000001
+
+【例15.4】使用PURGE MASTER LOGS删除创建时间比binlog.000003早的所有日志文件。
+首先，为了演示语句操作过程，准备多个日志文件，读者可以对MySQL服务进行多次重新启动。例如这里有10个日志文件，如下：
+ SHOW binary logs;
+
+执行删除命令如下：
+ PURGE MASTER LOGS TO "binlog.000003";
+Query OK, 0 rows affected (0.07 sec)
+执行完成后，使用SHOW binary logs语句查看二进制日志：
+ SHOW binary logs;
+【例15.5】使用PURGE MASTER LOGS删除2011年8月30日前创建的所有日志文件，执行命令及结果如下：
+ PURGE MASTER LOGS BEFORE '20130330';
+Query OK, 0 rows affected (0.05 sec)
+语句执行之后，2013年3月30日之前创建的日志文件都将被删除，但2013年3月30日的日志会被保留（读者可根据自己机器中创建日志的时间修改命令参数）。使用mysqlbinlog可以查看指定日志的创建时间，如前面的【例15.3】所示，部分日志内容如下：
+C:\> mysqlbinlog D:\MySQL\log\mysql-bin.000001
+【例15.6】使用mysqlbinlog恢复MySQL数据库到2013年3月30日15:27:48时的状态，执行命令及结果如下：
+mysqlbinlog --stop-date="2013-03-30 15:27:48" D:\MySQL\log\binlog\binlog.000008 | mysql –uuser –ppass
+
+【例15.7】使用记事本查看MySQL错误日志。
+首先，通过SHOW VARIABLES语句查询错误日志的存储路径和文件名：
+ SHOW VARIABLES LIKE 'log_error';
+可以看到错误的文件是Kevin.err，位于MySQL默认的数据目录下，使用记事本打开该文件，可以看到MySQL的错误日志：
+130330 16:45:14 [Note] Plugin 'FEDERATED' is disabled.
+130330 16:45:14 InnoDB: The InnoDB memory heap is disabled
+130330 16:45:14 InnoDB: Mutexes and rw_locks use Windows interlocked functions
+130330 16:45:14 InnoDB: Compressed tables use zlib 1.2.3
+130330 16:45:15 InnoDB: Initializing buffer pool, size = 46.0M
+130330 16:45:15 InnoDB: Completed initialization of buffer pool
+130330 16:45:15 InnoDB: highest supported file format is Barracuda.
+130330 16:45:15 InnoDB: Waiting for the background threads to start
+130330 16:45:16 InnoDB: 1.1.7 started; log sequence number 1679264
+130330 16:45:16 [Note] Event Scheduler: Loaded 0 events
+130330 16:45:16 [Note] C:\Program Files\MySQL\MySQL Server 5.6\bin\mysqld: ready for connections.
+Version: '5.6.10-log'  socket: ''  port: 3306  MySQL Community Server (GPL)
+以上是错误日志文件的一部分，这里面记载了系统的一些错误。
+
+【例15.8】使用记事本查看MySQL通用查询日志。
+使用记事本打开D:\mysql-5.6.10-win32\data\目录下的my-PC.log，可以看到如下内容：
+C:\Program Files\MySQL\MySQL Server 5.6\bin\mysqld, Version: 5.6.10-log (MySQL Community Server 
+(GPL)). started with:
+TCP Port: 3306, Named Pipe: (null)
+Time                 Id Command    Argument
+130330 17:24:32        1 Connect      root@localhost on 
+    1 Query        select @@version_comment limit 1
+130330 17:24:36        1 Query        SELECT DATABASE()
+    1 Init DB        test
+130330 17:24:53        1 Query         SELECT * FROM fruits
+130330 17:24:55       1 Quit 
+
+【例15.9】直接删除MySQL通用查询日志。执行步骤如下：
+  查看my.ini（或者my.cnf）查看通用查询日志的文件目录，在my.ini中通用查询日志配置如下。
+[mysqld]
+log
+可以看到，配置文件中没有指定日志文件名和存储目录，通用查询日志文件存储在MySQL默认数据目录中。
+  在数据目录中找到日志文件所在目录C:\Documents and Settings\All Users.WINDOWS\ Application Data\MySQL\MySQL Server 5.6\data\，删除该后缀为.err的文件。
+  通过mysqladmin –flush logs命令建立新的日志文件，执行命令如下。
+C:\> mysqladmin –u root –p flush-logs
+  执行完该命令，可以看到，C:\Documents and Settings\All Users.WINDOWS\Application Data\MySQL\MySQL Server 5.6\data\目录中已经建立了新的日志文件Kevin.log。
+
+【例15.10】查看慢查询日志。使用文本编辑器打开数据目录下的Kevin-slow.log文件，文件部分如下：
+C:\Program Files\MySQL\MySQL Server 5.6\bin\mysqld, Version: 5.6.10-log (MySQL Community Server 
+(GPL)). started with:
+TCP Port: 3306, Named Pipe: (null)
+Time Id Command Argument
+# Time: 130330 17:50:35
+# User@Host: root[root] @ localhost [127.0.0.1]
+# Query_time: 136.500000  Lock_time: 0.000000 Rows_sent: 1  Rows_examined: 0
+SET timestamp=1314697835;
+SELECT BENCHMARK(100000000, PASSWORD('newpwd'));

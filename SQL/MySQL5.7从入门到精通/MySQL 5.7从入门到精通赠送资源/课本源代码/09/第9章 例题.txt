@@ -1,0 +1,311 @@
+【例9.1】在book表中的year_publication字段上建立普通索引，SQL语句如下：
+CREATE TABLE book
+(
+bookid            	INT NOT NULL,
+bookname          	VARCHAR(255) NOT NULL,
+authors            	VARCHAR(255) NOT NULL,
+info               	VARCHAR(255) NULL,
+comment           	VARCHAR(255) NULL,
+year_publication   	YEAR NOT NULL,
+INDEX(year_publication)
+);
+该语句执行完毕之后，使用SHOW CREATE TABLE查看表结构：
+ SHOW CREATE table book \G
+*************************** 1. row ***************************
+       Table: book
+CREATE Table: CREATE TABLE `book` (
+  `bookid` int(11) NOT NULL,
+  `bookname` varchar(255) NOT NULL,
+  `authors` varchar(255) NOT NULL,
+  `info` varchar(255) DEFAULT NULL,
+  `comment` varchar(255) DEFAULT NULL,
+  `year_publication` year(4) NOT NULL,
+  KEY `year_publication` (`year_publication`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8
+由结果可以看到，book1表的year_publication字段上成功建立索引，其索引名称year_publication为MySQL自动添加。使用EXPLAIN语句查看索引是否正在使用：
+ explain select * from book where year_publication=1990 \G
+*************************** 1. row ***************************
+           id: 1
+  select_type: SIMPLE
+        table: book
+         type: ref
+possible_keys: year_publication
+          key: year_publication
+      key_len: 1
+          ref: const
+         rows: 1
+        Extra:
+1 row in set (0.05 sec)
+【例9.2】创建一个表t1，在表中的id字段上使用UNIQUE关键字创建唯一索引。
+CREATE TABLE t1
+(
+id    INT NOT NULL,
+name CHAR(30) NOT NULL,
+UNIQUE INDEX UniqIdx(id)
+);
+该语句执行完毕之后，使用SHOW CREATE TABLE查看表结构：
+ SHOW CREATE table t1 \G
+*************************** 1. row ***************************
+       Table: t1
+CREATE Table: CREATE TABLE `t1` (
+  `id` int(11) NOT NULL,
+  `name` char(30) NOT NULL,
+  UNIQUE KEY `UniqIdx` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8
+1 row in set (0.00 sec)
+由结果可以看到，id字段上已经成功建立了一个名为UniqIdx的唯一索引。
+【例9.3】创建一个表t2，在表中的name字段上创建单列索引。
+表结构如下：
+CREATE TABLE t2
+(
+id   INT NOT NULL,
+name CHAR(50) NULL,
+INDEX SingleIdx(name(20))
+);
+该语句执行完毕之后，使用SHOW CREATE TABLE查看表结构：
+ SHOW CREATE table t2 \G
+*************************** 1. row ***************************
+       Table: t2
+CREATE Table: CREATE TABLE `t2` (
+  `id` int(11) NOT NULL,
+  `name` char(50) DEFAULT NULL,
+  KEY `SingleIdx` (`name`(20))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8
+由结果可以看到，id字段上已经成功建立了一个名为SingleIdx的单列索引，索引长度为20。
+【例9.4】创建表t3，在表中的id、name和age字段上建立组合索引，SQL语句如下：
+CREATE TABLE t3
+(
+id    INT NOT NULL,
+name CHAR(30) 　NOT NULL,
+age  INT NOT　 NULL,
+info VARCHAR(255),
+INDEX MultiIdx(id, name, age(100))
+);
+该语句执行完毕之后，使用SHOW CREATE TABLE查看表结构：
+ SHOW CREATE table t3 \G
+*************************** 1. row ***************************
+       Table: t3
+CREATE Table: CREATE TABLE `t3` (
+  `id` int(11) NOT NULL,
+  `name` char(30) NOT NULL,
+  `age` int(11) NOT NULL,
+  `info` varchar(255) DEFAULT NULL,
+  KEY `MultiIdx` (`id`,`name`,`age`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8
+由结果可以看到，id、name和age字段上已经成功建立了一个名为MultiIdx的组合索引。
+组合索引可起几个索引的作用，但是使用时并不是随便查询哪个字段都可以使用索引，而是遵从“最左前缀”：利用索引中最左边的列集来匹配行，这样的列集称为最左前缀。例如这里由id、name和age 3个字段构成的索引，索引行中按id/name/age的顺序存放，索引可以搜索下面字段组合：（id, name, age）、（id, name）或者id。如果列不构成索引最左面的前缀，MySQL不能使用局部索引，如（age）或者（name,age）组合则不能使用索引查询。
+在t3表中，查询id和name字段，使用EXPLAIN语句查看索引的使用情况：
+ explain select * from t3 where id=1 AND name='joe' \G
+*************************** 1. row ***************************
+           id: 1
+  select_type: SIMPLE
+        table: t3
+         type: ref
+possible_keys: MultiIdx
+          key: MultiIdx
+      key_len: 94
+          ref: const,const
+         rows: 1
+        Extra: Using where
+1 row in set (0.00 sec)
+可以看到，查询id和name字段时，使用了名称MultiIdx的索引，如果查询（name,age）组合或者单独查询name和age字段，结果如下：
+*************************** 1. row ***************************
+           id: 1
+  select_type: SIMPLE
+        table: t3
+         type: ALL
+possible_keys: NULL
+          key: NULL
+      key_len: NULL
+          ref: NULL
+         rows: 1
+        Extra: Using where
+此时，possible_keys和key值为NULL，并没有使用在t3表中创建的索引进行查询。
+5．创建全文索引
+FULLTEXT全文索引可以用于全文搜索。只有MyISAM存储引擎支持FULLTEXT索引，并且只为CHAR、VARCHAR和TEXT列。索引总是对整个列进行，不支持局部（前缀）索引。
+【例9.5】创建表t4，在表中的info字段上建立全文索引，SQL语句如下：
+CREATE TABLE t4
+(
+id    INT NOT NULL,
+name CHAR(30) NOT NULL,
+age  INT NOT NULL,
+info VARCHAR(255),
+FULLTEXT INDEX FullTxtIdx(info)
+) ENGINE=MyISAM;
+因为MySQL5.6中默认存储引擎为InnoDB，在这里创建表时需要修改表的存储引擎为MyISAM，不然创建索引会出错。
+语句执行完毕之后，使用SHOW CREATE TABLE查看表结构：
+ SHOW CREATE table t4 \G
+*************************** 1. row ***************************
+       Table: t4
+CREATE Table: CREATE TABLE `t4` (
+  `id` int(11) NOT NULL,
+  `name` char(30) NOT NULL,
+  `age` int(11) NOT NULL,
+  `info` varchar(255) DEFAULT NULL,
+  FULLTEXT KEY `FullTxtIdx` (`info`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8
+由结果可以看到，info字段上已经成功建立了一个名为FullTxtIdx的FULLTEXT索引。全文索引非常适合于大型数据集，对于小的数据集，它的用处可能比较小。
+6．创建空间索引
+空间索引必须在MyISAM类型的表中创建，且空间类型的字段必须为非空。
+【例9.6】创建表t5，在空间类型为GEOMETRY的字段上创建空间索引，SQL语句如下：
+CREATE TABLE t5
+( g GEOMETRY NOT NULL, SPATIAL INDEX spatIdx(g) )ENGINE=MyISAM;
+该语句执行完毕之后，使用SHOW CREATE TABLE查看表结构：
+ SHOW CREATE table t5 \G
+【例9.7】在book表中的bookname字段上建立名为BkNameIdx的普通索引，SQL语句如下：
+ALTER TABLE book ADD INDEX BkNameIdx ( bookname(30) );
+添加索引之前，使用SHOW INDEX语句查看指定表中创建的索引：
+ SHOW INDEX FROM book \G
+
+下面使用ALTER TABLE 在bookname字段上添加索引，SQL语句如下：
+ALTER TABLE book ADD INDEX BkNameIdx( bookname(30) );
+使用SHOW INDEX语句查看表中的索引：
+ SHOW INDEX FROM book \G
+
+【例9.8】在book表的bookId字段上建立名称为UniqidIdx 的唯一索引，SQL语句如下：
+ALTER TABLE book ADD UNIQUE INDEX UniqidIdx ( bookId );
+使用SHOW INDEX语句查看表中的索引：
+ SHOW INDEX FROM book \G
+
+【例9.9】在book表的comment字段上建立单列索引，SQL语句如下：
+ALTER TABLE book ADD INDEX BkcmtIdx ( comment(50) );
+使用SHOW INDEX语句查看表中的索引：
+
+【例9.10】在book表的authors和info字段上建立组合索引，SQL语句如下：
+ALTER TABLE book ADD INDEX BkAuAndInfoIdx ( authors(20),info(50) );
+使用SHOW INDEX语句查看表中的索引：
+
+【例9.11】创建表t6，在t6表上使用ALTER TABLE创建全文索引，SQL语句如下：
+首先创建表t6，语句如下：
+CREATE TABLE t6
+(
+id    INT NOT NULL,
+info  CHAR(255)
+) ENGINE=MyISAM;
+注意修改ENGINE参数为MyISAM，MySQL默认引擎InnoDB不支持全文索引。
+使用ALTER TABLE语句在info字段上创建全文索引：
+ALTER TABLE t6 ADD FULLTEXT INDEX infoFTIdx ( info );
+使用SHOW INDEX语句查看索引：
+ SHOW index from t6 \G
+
+【例9.12】创建表t7，在t7的空间数据类型字段g上创建名称为spatIdx的空间索引，SQL语句如下：
+CREATE TABLE t7 ( g GEOMETRY NOT NULL )ENGINE=MyISAM;
+使用ALTER TABLE在表t7的g字段建立空间索引：
+ALTER TABLE t7 ADD SPATIAL INDEX spatIdx(g);
+使用SHOW INDEX语句查看索引：
+ SHOW index from t7 \G
+
+2．使用CREATE INDEX创建索引
+CREATE INDEX语句可以在已经存在的表上添加索引，MySQL中CREATE INDEX被映射到一个ALTER TABLE语句上，基本语法结构为：
+CREATE [UNIQUE|FULLTEXT|SPATIAL] INDEX index_name
+ON table_name (col_name[length],…) [ASC | DESC]
+可以看到CREATE INDEX语句和ALTER INDEX语句的语法基本一样，只是关键字不同。
+在这里，使用相同的表book，假设该表中没有任何索引值，创建book表语句如下：
+CREATE TABLE book
+(
+bookid          	INT NOT NULL,
+bookname        	VARCHAR(255) NOT NULL,
+authors           	VARCHAR(255) NOT NULL,
+info              	VARCHAR(255) NULL,
+comment          	VARCHAR(255) NULL,
+year_publication   	YEAR NOT NULL
+);
+提示：读者可以将该数据库中的book表删除，按上面的语句重新建立，然后进行下面的操作。
+【例9.13】在book表中的bookname字段上建立名为BkNameIdx的普通索引，SQL语句如下：
+CREATE INDEX BkNameIdx ON book(bookname);
+语句执行完毕之后，将在book表中创建名称为BkNameIdx的普通索引。读者可以使用SHOW INDEX或者SHOW CREATE TABLE语句查看book表中的索引，其索引内容与前面介绍相同。
+【例9.14】在book表的bookId字段上建立名称为UniqidIdx 的唯一索引，SQL语句如下：
+CREATE UNIQUE INDEX UniqidIdx  ON book ( bookId );
+语句执行完毕之后，将在book表中创建名称为UniqidIdx 的唯一索引。
+【例9.15】在book表的comment字段上建立单列索引，SQL语句如下：
+CREATE INDEX BkcmtIdx ON book(comment(50) );
+语句执行完毕之后，将在book表的comment字段上建立一个名为BkcmtIdx的单列索引，长度为50。
+【例9.16】在book表的authors和info字段上建立组合索引，SQL语句如下：
+CREATE INDEX BkAuAndInfoIdx ON book ( authors(20),info(50) );
+语句执行完毕之后，将在book表的authors和info字段上建立了一个名为BkAuAndInfoIdx的组合索引，authors的索引序号为1，长度为20，info的索引序号为2，长度为50。
+【例9.17】删除表t6，重新建立表t6，在t6表中使用CREATE INDEX语句，在CHAR类型的info字段上创建全文索引，SQL语句如下：
+首先删除表t6，并重新建立该表，分别输入下面语句：
+ drop table t6;
+Query OK, 0 rows affected (0.00 sec)
+
+ CREATE TABLE t6
+     (
+     id    INT NOT NULL,
+     info  CHAR(255)
+     ) ENGINE=MyISAM;
+Query OK, 0 rows affected (0.00 sec)
+使用CREATE INDEX在t6表的info字段上创建名称为infoFTIdx的全文索引：
+CREATE FULLTEXT INDEX ON t6(info);
+语句执行完毕之后，将在t6表中创建名称为infoFTIdx的索引，该索引在info字段上创建，类型为FULLTEXT，允许空值。
+【例9.18】删除表t7，重新创建表t7，在t7表中使用CREATE INDEX语句，在空间数据类型字段g上创建名称为spatIdx的空间索引，SQL语句如下：
+首先删除表t7，并重新建立该表，分别输入下面语句：
+ drop table t7;
+Query OK, 0 rows affected (0.00 sec)
+
+ CREATE TABLE t7 ( g GEOMETRY NOT NULL )ENGINE=MyISAM;
+Query OK, 0 rows affected (0.00 sec)
+使用CREATE INDEX语句在表t7的g字段建立空间索引，
+CREATE SPATIAL INDEX spatIdx ON t7 (g);
+语句执行完毕之后，将在t7表中创建名称为spatIdx的空间索引，该索引在g字段上创建。
+9.3  删除索引
+MySQL中删除索引使用ALTER TABLE或者DROP INDEX语句，两者可实现相同的功能，DROP INDEX语句在内部被映射到一个ALTER TABLE语句中。
+1．使用ALTER TABLE删除索引
+ALTER TABLE删除索引的基本语法格式如下：
+ALTER TABLE table_name DROP INDEX index_name;
+【例9.19】删除book表中的名称为UniqidIdx的唯一索引，SQL语
+句如下：
+首先查看book表中是否有名称为UniqidIdx的索引，输入SHOW语句如下：
+ SHOW CREATE table book \G
+*************************** 1. row ***************************
+       Table: book
+CREATE Table: CREATE TABLE `book` (
+  `bookid` int(11) NOT NULL,
+  `bookname` varchar(255) NOT NULL,
+  `authors` varchar(255) NOT NULL,
+  `info` varchar(255) DEFAULT NULL,
+  `year_publication` year(4) NOT NULL,
+  UNIQUE KEY `UniqidIdx` (`bookid`),
+  KEY `BkNameIdx` (`bookname`),
+  KEY `BkAuAndInfoIdx` (`authors`(20),`info`(50))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8
+查询结果可以看到，book表中有名称为UniqidIdx的唯一索引，该索引在bookid字段上创建，下面删除该索引，输入删除语句如下：
+ ALTER TABLE book DROP INDEX UniqidIdx;
+Query OK, 0 rows affected (0.02 sec)
+Records: 0  Duplicates: 0  Warnings: 0
+语句执行完毕，使用SHOW语句查看索引是否被删除：
+ SHOW CREATE table book \G
+*************************** 1. row ***************************
+       Table: book
+CREATE Table: CREATE TABLE `book` (
+  `bookid` int(11) NOT NULL,
+  `bookname` varchar(255) NOT NULL,
+  `authors` varchar(255) NOT NULL,
+  `info` varchar(255) DEFAULT NULL,
+  `year_publication` year(4) NOT NULL,
+  KEY `BkNameIdx` (`bookname`),
+  KEY `BkAuAndInfoIdx` (`authors`(20),`info`(50))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8
+由结果可以看到，book表中已经没有名称为uniqidIdx的唯一索引，删除索引成功。
+添加AUTO_INCREMENT约束字段的唯一索引不能被删除。
+2．使用DROP INDEX语句删除索引
+DROP INDEX删除索引的基本语法格式如下：
+DROP INDEX index_name ON table_name;
+【例9.20】删除book表中名称为BkAuAndInfoIdx的组合索引，SQL语句如下：
+ DROP INDEX BkAuAndInfoIdx ON book;
+Query OK, 0 rows affected (0.02 sec)
+Records: 0  Duplicates: 0  Warnings: 0
+语句执行完毕，使用SHOW语句查看索引是否被删除：
+ SHOW CREATE table book \G
+*************************** 1. row ***************************
+       Table: book
+CREATE Table: CREATE TABLE `book` (
+  `bookid` int(11) NOT NULL,
+  `bookname` varchar(255) NOT NULL,
+  `authors` varchar(255) NOT NULL,
+  `info` varchar(255) DEFAULT NULL,
+  `year_publication` year(4) NOT NULL,
+  KEY `BkNameIdx` (`bookname`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8
+1 row in set (0.00 sec)
+可以看到，book表中已经没有名称为BkAuAndInfoIdx的组合索引，删除索引成功。
+删除表中的列时，如果要删除的列为索引的组成部分，则该列也会从索引中删除。如果组成索引的所有列都被删除，则整个索引将被删除。

@@ -1,0 +1,56 @@
+步骤1.打开MySQL客户端工具，输入登录命令，登录MySQL：
+/*使用root用户登录mysql*/
+mysql -u root -p
+
+
+步骤2.将选择mysql数据库为当前数据库。
+use mysql;
+
+
+步骤3.创建新账户，用户名称为newAdmin，允许其从本地主机访问MySQL。
+GRANT SELECT, UPDATE(id, name, age)
+  ON test.person
+  TO 'newAdmin'@'localhost' IDENTIFIED BY 'pw1'
+  WITH MAX_CONNECTIONS_PER_HOUR 30;
+
+
+步骤4.分别从user表中查看新账户的账户信息，从tables_priv和columns_priv表中查看权限信息。
+/* 查看user表中账户信息*/
+SELECT host, user, select_priv, update_priv FROM user WHERE user='newAdmin';
+/*查看tables_priv表中权限信息*/
+SELECT host, db, user, table_name, table_priv, column_priv 
+FROM tables_priv WHERE user='newAdmin';
+/*查看columns_priv表中权限信息*/
+SELECT host, db, user, table_name, column_name, column_priv 
+FROM columns_priv WHERE user='newAdmin';
+
+
+步骤5.使用SHOW GRANTS语句查看newAdmin的权限信息
+SHOW GRANTS FOR 'newAdmin'@'localhost';
+
+
+步骤6.使用newAdmin用户登录MySQL
+/*退出命令*/
+exit
+/*使用newAdmin 用户登录mysql*/
+mysql -u newAdmin -p
+
+
+步骤7.使用newAdmin用户查看test数据库中person表中的数据
+SELECT * FROM test.person LIMIT 5;
+
+步骤8.使用newAdmin用户向person表中插入一条新记录，查看语句执行结果。
+INSERT INTO test.person(name, age,info) VALUES('gaga', 30);
+
+步骤9.退出当前登录，使用root用户重新登录，收回newAdmin账户的权限。
+
+/*退出命令*/
+exit
+/*使用root用户登录mysql*/
+mysql -u root -p
+
+REVOKE SELECT, UPDATE ON test.person FROM 'newAdmin'@'localhost';
+
+步骤10.删除newAdmin的账户信息。
+删除指定账户，可以使用DROP USER语句，输入如下：
+DROP USER 'newAdmin'@'localhost';

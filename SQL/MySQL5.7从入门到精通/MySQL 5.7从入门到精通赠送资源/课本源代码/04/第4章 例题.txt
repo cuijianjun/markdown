@@ -1,0 +1,327 @@
+【例4.1】创建员工表tb_emp1。
+首先创建数据库，SQL语句如下：
+CREATE  DATABASE test_db;
+选择创建表的数据库，SQL语句如下：
+USE test_db;
+创建tb_emp1表，SQL语句为：
+CREATE TABLE tb_emp1
+(
+id      INT(11),
+name   VARCHAR(25),
+deptId  INT(11),
+salary  FLOAT
+);
+语句执行后，便创建了一个名称为tb_emp1的数据表，使用SHOW TABLES；语句查看数据表是否创建成功，SQL语句如下：
+ SHOW TABLES;
++-----------------------+
+| Tables_in_ test_db |
++----------------------+
+| tb_emp1         |
++----------------------+
+1 row in set (0.00 sec)
+可以看到，test_db数据库中已经有了数据表tb_tmp1，数据表创建成功。
+【例4.2】定义数据表tb_emp 2，其主键为id，SQL语句如下：
+CREATE TABLE tb_emp2
+(
+id    	INT(11) PRIMARY KEY,
+name  	VARCHAR(25),
+deptId 	INT(11),
+salary 	FLOAT
+);
+【例4.3】定义数据表tb_emp 3，其主键为id，SQL语句如下：
+CREATE TABLE tb_emp3 
+(
+id INT(11),
+name VARCHAR(25),
+deptId INT(11),
+salary FLOAT,
+PRIMARY KEY(id)
+);
+上述两个例子执行后的结果是一样的，都会在id字段上设置主键约束。
+【例4.4】定义数据表tb_emp4，假设表中间没有主键id，为了唯一确定一个员工，可以把name、deptId联合起来做为主键，SQL语句如下：
+CREATE TABLE tb_emp4
+ (
+name VARCHAR(25),
+deptId INT(11),
+salary FLOAT,
+PRIMARY KEY(name,deptId)
+);
+【例4.5】定义数据表tb_emp5，并在tb_emp5表上创建外键约束。
+创建一个部门表tb_dept1，SQL语句如下：
+CREATE TABLE tb_dept1
+(
+id       INT(11) PRIMARY KEY,
+name    VARCHAR(22)  NOT NULL,
+location  VARCHAR(50)
+);
+
+定义数据表tb_emp5，让它的键deptId作为外键关联到tb_dept1的主键id，SQL语句为：
+CREATE TABLE tb_emp5 
+(
+id      INT(11) PRIMARY KEY,
+name   VARCHAR(25),
+deptId  INT(11), 
+salary   FLOAT,
+CONSTRAINT fk_emp_dept1 FOREIGN KEY(deptId) REFERENCES tb_dept1(id)
+);
+以上语句执行成功之后，在表tb_emp5上添加了名称为fk_emp_dept1的外键约束，外键名称为deptId，其依赖于表tb_dept1的主键id。
+【例4.6】定义数据表tb_emp6，指定员工的名称不能为空，SQL语句如下：
+CREATE TABLE tb_emp6 
+(
+id     INT(11) PRIMARY KEY,
+name   VARCHAR(25) NOT NULL,
+deptId  INT(11), 
+salary  FLOAT
+);
+【例4.7】定义数据表tb_dept2，指定部门的名称唯一，SQL语句如下：
+CREATE TABLE tb_dept2 
+(
+id      INT(11) PRIMARY KEY,
+name    VARCHAR(22) UNIQUE,
+location  VARCHAR(50)
+);
+【例4.8】定义数据表tb_dept3，指定部门的名称唯一，SQL语句如下：
+CREATE TABLE tb_dept3 
+(
+id      INT(11) PRIMARY KEY,
+name    VARCHAR(22),
+location  VARCHAR(50),
+CONSTRAINT STH UNIQUE(name)
+);
+【例4.9】定义数据表tb_emp7，指定员工的部门编号默认为1111，SQL语句如下：
+CREATE TABLE tb_emp7 
+(
+id      INT(11) PRIMARY KEY,
+name   VARCHAR(25) NOT NULL,
+deptId  INT(11) DEFAULT 1111, 
+salary  FLOAT
+);
+【例4.10】定义数据表tb_emp8，指定员工的编号自动递增，SQL语句如下：
+CREATE TABLE tb_emp8 
+(
+id      INT(11) PRIMARY KEY AUTO_INCREMENT,
+name   VARCHAR(25) NOT NULL,
+deptId  INT(11), 
+salary  FLOAT
+);
+
+例如，执行如下插入语句：
+INSERT INTO tb_emp8 (name,salary)
+VALUES('Lucy',1000), ('Lura',1200),('Kevin',1500);
+语句执行完后，tb_emp8表中增加3条记录，在这里并没有输入id的值，但系统已经自动添加该值，使用SELECT命令查看记录，如下所示。
+SELECT * FROM tb_emp8;
+【例4.11】分别使用DESCRIBE和DESC查看表tb_dept1和表tb_emp1的表结构。
+查看tb_dept1表结构，SQL语句如下：
+DESCRIBE tb_dept1;
++-----------+---------------+------+-----+---------+-------+
+| Field    | Type      | Null | Key | Default | Extra |
++-----------+---------------+------+-----+---------+-------+
+| id       | int(11)    | NO  | PRI | NULL |      |
+| name    | varchar(22) | NO  |    | NULL |      |
+| location  | varchar(50) | YES |    | NULL |      |
++-----------+---------------+------+-----+---------+--------+
+查看tb_emp1表结构，SQL语句如下：
+ DESC tb_emp1;
++--------+--------------+------+-----+---------+-------+
+| Field  | Type      | Null | Key | Default | Extra |
++--------+--------------+------+-----+---------+-------+
+| id     | int (11)    | YES |    | NULL  |     |
+| name  | varchar(25) | YES |    | NULL  |     |
+| deptId | int (11)     | YES |    | NULL  |     |
+| salary  | float      | YES |    | NULL  |     |
++---------+-------------+-------+-----+---------+-------+
+【例4.12】使用SHOW CREATE TABLE查看表tb_emp1的详细信息，SQL语句如下：
+ SHOW CREATE TABLE tb_emp1;
++--------+----------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------+
+| Table  | Create Table
+
+                                                                        |
++--------+----------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------+
+| fruits | CREATE TABLE `fruits` (
+  `f_id` char(10) NOT NULL,
+  `s_id` int(11) NOT NULL,
+  `f_name` char(255) NOT NULL,
+  `f_price` decimal(8,2) NOT NULL,
+  PRIMARY KEY (`f_id`),
+  KEY `index_name` (`f_name`),
+  KEY `index_id_price` (`f_id`,`f_price`)
+) ENGINE=InnoDB DEFAULT CHARSET=gb2312 |
++--------+----------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------+
+使用参数’\G’之后的结果如下：
+ SHOW CREATE TABLE tb_emp1\G
+*************************** 1. row ***************************
+       Table: tb_emp1
+Create Table: CREATE TABLE `tb_emp1` (
+  `id` int(11) DEFAULT NULL,
+  `name` varchar(25) DEFAULT NULL,
+  `deptId` int(11) DEFAULT NULL,
+  `salary` float DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=gb2312
+
+【例4.13】将数据表tb_dept3改名为tb_deptment3。
+使用ALTER TABLE将表tb_dept3改名为tb_deptment3，SQL语句如下：
+ALTER TABLE tb_dept3 RENAME tb_deptment3;
+
+【例4.14】将数据表tb_dept1中name字段的数据类型由VARCHAR(22)修改成VARCHAR(30)。
+执行修改表名操作之前，使用DESC查看tb_dept表结构，结果如下：
+ DESC tb_dept1;
++----------+---------------+---------+--------+-------------+-------+
+| Field   | Type       | Null  | Key   |Default   | Extra |
++----------+---------------+---------+--------+-------------+-------+
+| id      | int(11)     | NO   | PRI   | NULL   |     |
+| name   | varchar(22)  | YES  |       | NULL   |     |
+| location | varchar(50)  | YES  |      | NULL    |     |
++----------+---------------+--------+---------+-------------+-------+
+3 rows in set (0.00 sec)
+可以看到现在name字段的数据类型为VARCHAR(22)，下面修改其类型。输入如下SQL语句并执行：
+ALTER TABLE tb_dept1 MODIFY name VARCHAR(30);
+【例4.15】将数据表tb_dept1中的location字段名称改为loc，数据类型保持不变，SQL语句如下：
+ALTER TABLE tb_dept1 CHANGE location loc VARCHAR(50);
+【例4.16】 将数据表tb_dept1中的loc字段名称改为location，同时将数据类型变为VARCHAR(60)，SQL语句如下：
+ALTER TABLE tb_dept1CHANGE loc location VARCHAR(60);
+
+【例4.17】在数据表tb_dept1中添加一个没有完整性约束的INT类型的字段managerId（部门经理编号），SQL语句如下：
+ALTER TABLE tb_dept1 ADD managerId INT(10);
+
+【例4.18】在数据表tb_dept1中添加一个不能为空的VARCHAR(12)类型的字段column1，SQL语句如下：
+ALTER TABLE tb_dept1 ADD column1 VARCHAR(12) not null;
+【例4.19】在数据表tb_dept1中添加一个INT类型的字段column2，SQL语句如下：
+ALTER TABLE tb_dept 1ADD column2 INT(11) FIRST;
+【例4.20】在数据表tb_dept1中name列后添加一个INT类型的字段column3，SQL语句如下：
+ALTER TABLE tb_dept1 ADD column3 INT(11) AFTER name;
+
+【例4.21】删除数据表tb_dept1表中的column2字段。
+删除column2字段，SQL语句如下：
+ALTER TABLE tb_dept1 DROP column2;
+【例4.22】将数据表tb_dept中的column1字段修改为表的第一个字段，SQL语句如下：
+ALTER TABLE tb_dept1 MODIFY column1 VARCHAR(12) FIRST;
+【例4.23】将数据表tb_dept1中的column1字段插入到location字段后面，SQL语句如下：
+ALTER TABLE tb_dept1 MODIFY column1 VARCHAR(12) AFTER location;
+
+【例4.24】将数据表tb_deptment3的存储引擎修改为MyISAM。
+在修改存储引擎之前，先使用SHOW CREATE TABLE查看表tb_deptment3当前的存储引擎，结果如下。
+  SHOW CREATE TABLE tb_deptment3 \G
+*************************** 1. row ***************************
+       Table: tb_deptment3
+Create Table: CREATE TABLE `tb_deptment3` (
+  `id` int(11) NOT NULL,
+  `name` varchar(22) DEFAULT NULL,
+  `location` varchar(50) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `STH` (`name`)
+) ENGINE=InnoDB DEFAULT CHARSET=gb2312
+1 row in set (0.00 sec)
+可以看到，表tb_deptment3当前的存储引擎为ENGINE=InnoDB，接下来修改存储引擎类型，输入如下SQL语句并执行：
+ ALTER TABLE tb_deptment3 ENGINE=MyISAM;
+使用SHOW CREATE TABLE再次查看表tb_deptment3的存储引擎，发现表tb_dept的存储引擎变成了“MyISAM”，结果如下：
+ SHOW CREATE TABLE tb_deptment3 \G
+*************************** 1. row ***************************
+      Table: tb_deptment3
+Create Table: CREATE TABLE `tb_deptment3` (
+  `id` int(11) NOT NULL,
+  `name` varchar(22) DEFAULT NULL,
+  `location` varchar(50) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `STH` (`name`)
+) ENGINE=MyISAM DEFAULT CHARSET=gb2312
+1 row in set (0.00 sec)
+
+【例4.25】删除数据表tb_emp9中的外键约束。
+首先创建表tb_emp9，创建外键deptId关联tb_dept1表的主键id，SQL语句如下：
+CREATE TABLE tb_emp9 
+(
+id      INT(11) PRIMARY KEY,
+name   VARCHAR(25),
+deptId  INT(11),
+salary   FLOAT,
+CONSTRAINT fk_emp_dept  FOREIGN KEY (deptId) REFERENCES tb_dept1(id)
+);
+使用SHOW CREATE TABLE查看表tb_emp9的结构，结果如下：
+ SHOW CREATE TABLE tb_emp9 \G
+*************************** 1. row ***************************
+       Table: tb_emp9
+Create Table: CREATE TABLE `tb_emp9` (
+  `id` int(11) NOT NULL,
+  `name` varchar(25) DEFAULT NULL,
+  `deptId` int(11) DEFAULT NULL,
+  `salary` float DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `fk_emp_dept` (`deptId`),
+  CONSTRAINT `fk_emp_dept` FOREIGN KEY (`deptId`) REFERENCES `tb_dept1` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=gb2312
+1 row in set (0.00 sec)
+可以看到，已经成功添加了表的外键，下面删除外键约束，SQL语句如下：
+ALTER TABLE tb_emp9 DROP FOREIGN KEY fk_emp_dept;
+执行完毕之后，将删除表tb_emp的外键约束，使用SHOW CREATE TABLE再次查看表tb_emp9结构，结果如下：
+ SHOW CREATE TABLE tb_emp9 \G
+*************************** 1. row ***************************
+       Table: tb_emp9
+Create Table: CREATE TABLE `tb_emp9` (
+  `id` int(11) NOT NULL,
+  `name` varchar(25) DEFAULT NULL,
+  `deptId` int(11) DEFAULT NULL,
+  `salary` float DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `fk_emp_dept` (`deptId`)
+) ENGINE=InnoDB DEFAULT CHARSET=gb2312
+1 row in set (0.00 sec)
+【例4.26】删除数据表tb_dept2，SQL语句如下：
+DROP TABLE IF EXISTS tb_dept2;
+
+
+在数据库中创建两个关联表，首先，创建表tb_dept2，SQL语句如下：
+CREATE TABLE tb_dept2 
+(
+id       INT(11) PRIMARY KEY,
+name    VARCHAR(22),
+location  VARCHAR(50)
+);
+接下来创建表tb_emp，SQL语句如下：
+CREATE TABLE tb_emp 
+(
+id       INT(11) PRIMARY KEY,
+name    VARCHAR(25),
+deptId   INT(11), 
+salary   FLOAT,
+CONSTRAINT fk_emp_dept  FOREIGN KEY (deptId) REFERENCES tb_dept2(id)
+);
+使用SHOW CREATE TABLE命令查看表tb_emp的外键约束，结果如下：
+ SHOW CREATE TABLE tb_emp\G
+*************************** 1. row ***************************
+       Table: tb_emp
+Create Table: CREATE TABLE `tb_emp` (
+  `id` int(11) NOT NULL,
+  `name` varchar(25) DEFAULT NULL,
+  `deptId` int(11) DEFAULT NULL,
+  `salary` float DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `fk_emp_dept` (`deptId`),
+  CONSTRAINT `fk_emp_dept` FOREIGN KEY (`deptId`) REFERENCES `tb_dept2` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=gb2312
+1 row in set (0.00 sec)
+可以看到，以上执行结果创建了两个关联表tb_dept2和表tb_emp，其中tb_emp表为子表，具有名称为fk_emp_dept的外键约束，tb_dept2为父表，其主键id被子表tb_emp所关联。
+【例4.27】删除被数据表tb_emp关联的数据表tb_dept2。
+首先直接删除父表tb_dept2，输入删除语句如下：
+ DROP TABLE tb_dept2;
+ERROR 1217 (23000): Cannot delete or update a parent row: a foreign key constraint fails
+可以看到，如前所述，在存在外键约束时，主表不能被直接删除。
+接下来，解除关联子表tb_emp的外键约束，SQL语句如下：
+ALTER TABLE tb_emp DROP FOREIGN KEY fk_emp_dept;
+语句成功执行后，将取消表tb_emp和表tb_dept2之间的关联关系，此时，可以输入删除语句，将原来的父表tb_dept2删除，SQL语句如下：
+DROP TABLE tb_dept2;
+最后通过SHOW TABLES;查看数据表列表，如下所示：
+ show tables;
++---------------------+
+| Tables_in_test_db |
++---------------------+
+| tb_dept         |
+| tb_deptment3    |
+……省略部分内容
+可以看到，数据表列表中已经不存在名称为tb_dept2的表。
+

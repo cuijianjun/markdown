@@ -1,0 +1,175 @@
+【例11.1】在t表格上创建一个名为view_t的视图，代码如下：
+首先创建基本表并插入数据，语句如下：
+CREATE TABLE t (quantity INT, price INT);
+INSERT INTO t VALUES(3, 50);
+创建视图语句为：
+CREATE VIEW view_t AS SELECT quantity, price, quantity *price FROM t;
+
+SELECT * FROM view_t;
+
+【例11.2】在t表格上创建一个名为view_t2的视图，代码如下：
+ CREATE VIEW view_t2(qty, price, total ) AS SELECT quantity, price, quantity *price FROM t;
+语句执行成功，查看view_t2视图中的数据：
+ SELECT * FROM view_t2;
+【例11.3】在表student和表stu_info上创建视图stu_glass，代码如下：
+首先向两个表中插入数据，输入语句如下：
+ INSERT INTO student VALUES(1,'wanglin1'),(2,'gaoli'),(3,'zhanghai');
+
+
+ INSERT INTO stu_info VALUES(1, 'wuban','henan'),(2,'liuban','hebei'),(3,'qiban','shandong');
+
+CREATE VIEW stu_glass (id,name, glass) AS SELECT student.s_id,student.name ,stu_info.glass
+FROM student ,stu_info WHERE student.s_id=stu_info.s_id;
+
+ SELECT * FROM stu_glass;
+
+【例11.4】通过DESCRIBE语句查看视图view_t的定义，代码如下：
+DESCRIBE view_t;
+代码执行如下：
+ DESCRIBE view_t;
+
+【例11.5】下面将通过一个例子来学习使用SHOW TABLE STATUS命令查看视图信息，代码如下：
+SHOW TABLE STATUS LIKE 'view_t' \G
+
+执行结果显示，表的说明Comment的值为VIEW说明该表为视图，其他的信息也为NULL说明这是一个虚表。用同样的语句来查看一下数据表t的信息，执行结果如下：
+ SHOW TABLE STATUS LIKE 't' \G
+
+【例11.6】SHOW CREATE VIEW查看视图的详细定义，代码如下：
+SHOW CREATE VIEW view_t \G
+
+【例11.7】在views表中查看视图的详细定义，代码如下：
+ SELECT * FROM information_schema.views\G
+
+【例11.8】修改视图view_t，代码如下：
+CREATE OR REPLACE VIEW view_t AS SELECT * FROM t;
+首先通过DESC查看一下更改之前的视图，以便与更改之后的视图进行对比。执行的结果如下：
+ DESC view_t;
+
+ CREATE OR REPLACE VIEW view_t AS SELECT * FROM t;
+
+ DESC view_t;
+
+【例11.9】使用ALTER语句修改视图view_t，代码如下：
+ALTER VIEW view_t AS SELECT quantity FROM t; 
+执行结果如下：
+ DESC view_t;
++----------+---------+------+-----+---------+-------+
+| Field   | Type  | Null | Key | Default | Extra |
++----------+---------+------+-----+---------+-------+
+| quantity | int(11) | YES |     | NULL |      |
+| price   | int(11) | YES |     | NULL |      |
++----------+---------+------+-----+---------+-------+
+2 rows in set (0.06 sec)
+
+ ALTER VIEW view_t AS SELECT quantity FROM t;
+Query OK, 0 rows affected (0.05 sec)
+
+ DESC view_t;
++--------+--------------+------+-----+---------+-------+
+| Field  | Type     | Null | Key | Default | Extra |
++--------+--------------+------+-----+---------+-------+
+| quantity| int(11)    | YES |     | NULL |     |
++-------+---------------+------+-------+--------+-------+
+
+【例11.10】使用UPDATE语句更新视图view_t，代码如下：
+UPDATE view_t SET quantity=5;
+执行视图更新之前，查看基本表和视图的信息，执行结果如下：
+ SELECT * FROM view_t;
++----------+
+| quantity |
++----------+
+|      3 |
++---------+
+1 row in set (0.00 sec)
+
+ SELECT * FROM t;
++--------+-------+
+| quantity| price |
++--------+-------+
+|     3 |   50 |
++--------+-------+
+1 row in set (0.00 sec)
+
+使用UPDATE语句更新视图view_t，执行过程如下：
+ UPDATE view_t SET quantity=5;
+Query OK, 1 row affected (0.00 sec)
+Rows matched: 1  Changed: 1  Warnings: 0
+
+查看视图更新之后，基本表的内容：
+ SELECT * FROM t;
++----------+-------+
+| quantity | price |
++----------+-------+
+|      5 |    50 |
++----------+-------+
+1 row in set (0.02 sec)
+
+  SELECT * FROM view_t;
++----------+
+| quantity |
++----------+
+|       5 |
++----------+
+1 row in set (0.00 sec)
+
+  SELECT * FROM view_t2;
++------+-------+-------+
+| qty  | price | total |
++------+-------+-------+
+|   5 |    50 |  250 |
++------+-------+-------+
+1 row in set (0.00 sec) 
+对视图view_t更新后，基本表t的内容也更新了，同样当对基本表t更新后，另外一个视图view_t2中的内容也会更新。
+【例11.11】使用INSERT语句在基本表t中插入一条记录，代码如下：
+INSERT INTO t VALUES (3,5);
+执行结果如下：
+ INSERT INTO t VALUES(3,5);
+Query OK, 1 row affected (0.04 sec)
+
+ SELECT * FROM t;
++----------+-------+
+| quantity | price |
++----------+-------+
+|      5 |   50 |
+|      3 |    5 |
++----------+-------+
+2 rows in set (0.00 sec)
+
+ SELECT * FROM view_t2;
++------+-------+-------+
+| qty  | price | total |
++------+-------+-------+
+|   5 |    50 |  250 |
+|   3 |     5 |   15 |
++------+-------+-------+
+2 rows in set (0.00 sec)
+向表t中插入一条记录，通过SELECT查看表t和视图view_t2，可以看到其中的内容也跟着更新，视图更新的不仅仅是数量和单价，总价也会更新。
+【例11.12】使用DELETE语句在删除视图view_t2中的一条记录，代码如下：
+DELETE FROM view_t2 WHERE price=5;
+执行结果如下：
+ DELETE FROM view_t2 WHERE price=5;
+Query OK, 1 row affected (0.03 sec)
+ SELECT * FROM view_t2;
++------+-------+-------+
+| qty  | price | total |
++------+-------+-------+
+|   5 |    50 |  250 |
++------+-------+-------+
+1 row in set (0.00 sec)
+
+ SELECT * FROM t;
++----------+-------+
+| quantity | price |
++----------+-------+
+|      5 |    50 |
++----------+-------+
+
+【例11.13】删除stu_glass视图，代码如下：
+DROP VIEW IF EXISTS stu_glass;
+执行结果：
+ DROP VIEW IF EXISTS stu_glass;
+Query OK, 0 rows affected (0.00 sec)
+如果名称为stu_glass的视图存在，该视图将被删除。使用SHOW CREATE VIEW语句查看操作结果：
+ SHOW CREATE VIEW stu_glass;
+ERROR 1146 (42S02): Table 'chapter11db.stu_glass' doesn't exist
+可以看到，stu_glass视图已经不存在，删除成功。

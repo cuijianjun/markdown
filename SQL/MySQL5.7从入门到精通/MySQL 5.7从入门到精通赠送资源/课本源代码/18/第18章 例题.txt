@@ -1,0 +1,529 @@
+[18.2.2] Windows环境下实现主从复制
+
+步骤1: 在Windows操作系统下安装好两台主机的MySQL服务器，配置好两台主机的IP地址，实现两台计算机可以网络连通。
+
+步骤2: 看下datadir的具体的路径。
+mysql> show variables like '%datadir%';
+
+步骤3: 编译C:\Documents and Settings\All Users\Application Data\MySQL\MySQL Server 5.6目录下面的配置文件my.ini。
+[mysqld]
+log_bin="D:/MySQLlog/binlog"
+expire_logs_days = 10
+max_binlog_size = 100M
+
+步骤4: 登录MySQL之后，可以执行show variables like ‘%log_bin%’命令来测试下log_bin是否成功开启，命令语句执行如下。
+mysql> show variables like '%log_bin%';
+
+步骤5: 在master上配置复制所需要的账户，这里创建一个repl的用户。
+mysql> grant replication slave on *.* to repl@'%' identified by '123';
+mysql> flush privileges;
+
+步骤6: 在my.ini配置文件中配置Master主机的相关信息，如下所示。
+[mysqld]
+log_bin="D:/MySQLlog/binlog"
+expire_logs_days = 10
+max_binlog_size = 100M
+
+server-id = 1 
+binlog-do-db = test
+binlog-ignore-db = mysql
+ 
+步骤7: 重启Master主机的MySQL5.6服务，然后输入show master status命令查询Master主机的信息。
+mysql> show master status \G;
+
+步骤8: 将Master主机的数据备份出来，然后导入到Slave主机中去，具体执行语句如下。
+C:\Program Files\MySQL\MySQL Server 5.6\bin>mysqldump –u root -p –h localhost test >c:\a.txt
+
+将c:/a.txt拷贝到slave主机上面去，然后执行以下操作：
+C:\Program Files\MySQL\MySQL Server 5.6\bin>mysqldump -uroot -proot -hlocalhost
+test <c:\a.txt
+
+步骤9: 配置Slave主机（192.168.0.206）在C:\Documents and Settings\All Users\Application Data\MySQL\MySQL Server 5.6目录下面的配置文件my.ini，具体配置信息如下所示。
+[mysql] 
+default-character-set=utf8
+log_bin="D:/MySQLlog/binlog"
+expire_logs_days=10
+max_binlog_size = 100M
+
+[mysqld]
+server-id = 2  
+
+步骤10: 重启Slave主机（192.168.0.206），在Slave主机（192.168.0.206）的MySQL中执行如下命令，关闭slave服务，执行如下所示。
+mysql> stop slave;
+
+
+步骤11: 设置Slave从机实现复制相关的信息。命令执行如下。
+mysql> change master to
+    -> master_host='192.168.0.208',
+    -> master_user='repl',
+    -> master_password='123',
+    -> master_log_file='binglog.000003',
+    -> master_log_pos=120;
+
+步骤12: 继续执行操作，显示slave从机的状况，如下所示。
+mysql> start slave; 
+mysql> show slave status \G;
+ 
+
+[18.2.3] Windows环境下主从复制测试
+
+步骤1: 在Master主机的MySQL环境下，执行如下命令。
+mysql> use test; 
+mysql> create table rep_test(
+    ->   data integer
+    -> );  
+mysql> insert into rep_test values(2);
+  
+步骤2: 在Slave主机的MySQL环境下，查看主机刚才添加的表和数据是否成功同步到从机上上，命令执行如下所示。
+mysql> use test; 
+mysql> show tables; 
+
+mysql> use test; 
+mysql> show tables;  
+mysql> select *from rep_test; 
+
+
+[18.3.1]  下载并安装MySQL5.6
+
+
+步骤1: 先下载mysql-5.6.10.tar.gz源文件。可以在下载页面http://dev.mysql.com/downloads/mysql/5.6.html#downloads下载mysql-5.6.10.tar.gz源码
+
+步骤2: 下载完mysql-5.6.10.tar.gz后，创建MySQL安装程序的目录和数据文件的目录。命令执行如下。
+[root@localhost ~]# mkdir -p /usr/local/mysql
+[root@localhost ~]# mkdir -p /usr/local/mysql/data 
+[root@localhost ~]# groupadd mysql
+[root@localhost ~]# useradd -r -g mysql mysql
+
+步骤3: 解压缩MySQL源代码，这里使用的是cmake2.8.4来编译MySQL源代码。命令执行如下。
+[root@localhost ~]# tar -zxvf mysql-5.6.10.tar.gz
+[root@localhost ~]# cd mysql-5.6.10
+[root@localhost mysql-5.6.10]# cmake .
+[root@localhost mysql-5.6.10]# make && make install
+
+步骤4: 修改MySQL安装目录设置用户权限。
+[root@localhost ~]# chown -R mysql.mysql /usr/local/mysql
+
+
+步骤5: 安装MySQL5.6的源码。命令执行如下。
+[root@localhost ~]# cd /usr/local/mysql/scripts
+[root@localhost scripts]# ./mysql_install_db --user=mysql --basedir=/usr/local/mysql --datadir=/usr/local/mysql/data
+[root@localhost ~]# cd /usr/local/mysql/support-files
+[root@localhost support-files]# cp mysql.server /etc/rc.d/init.d/mysql
+[root@localhost support-files]# cp my-default.cnf /etc/my.cnf
+[root@localhost ~]# chkconfig --add mysql
+[root@localhost ~]# chkconfig mysql on
+
+步骤6: 启动MySQL5.6服务。命令执行如下。
+[root@localhost ~]# service mysql start
+
+步骤7: 在Fedora操作系统中登录MySQL5.6，默认用户root，密码为空，命令执行如下所示。
+[root@localhost ~]# mysql
+
+
+[7.3.2]  单机主从复制前的准备工作
+
+步骤1: 初始化多实例数据库，首先要停止掉MySQL服务器。命令执行如下。
+[root@localhost ~]# service mysql stop
+
+步骤2: 把常用到的工具添加到/usr/bin目录，命令执行如下。
+[root@localhost~]#ln -s /usr/local/mysql/bin/mysqld_multi /usr/bin/mysqld_multi
+[root@localhost~]#ln -s /usr/local/mysql/scripts/mysql_install_db 
+/usr/bin/mysql_install_db
+
+步骤3: 初始化三个数据目录并安装3个mysql服务，命令执行如下。
+[root@localhost ~]# cd /usr/local/mysql/
+[root@localhost mysql]# mkdir -p /usr/local/var/mysql1
+[root@localhost mysql]# mkdir -p /usr/local/var/mysql2
+[root@localhost mysql]# mkdir -p /usr/local/var/mysql3
+[root@localhost mysql]# ./scripts/mysql_install_db --datadir=/usr/local/var/mysql1 --user=mysql
+[root@localhost mysql]# ./scripts/mysql_install_db --datadir=/usr/local/var/mysql2 --user=mysql
+[root@localhost mysql]# ./scripts/mysql_install_db --datadir=/usr/local/var/mysql3 --user=mysql
+ 
+步骤4: 从MySQL的源码中把mysqld_multi.server复制到/etc/init.d/目录下，命令执行如下。
+[root@localhost ~]# cd /usr/local/mysql/support-files/
+[root@localhost support-files]# cp ./mysqld_multi.server /etc/init.d/mysql_multi.server
+
+步骤5: 配置数据库配置文件。直接配置/etc/my.cnf,修改相应的属性，如下所示。
+ 
+# The MySQL server
+[mysqld_multi]
+mysqld 	        = /usr/local/mysql/bin/mysqld_safe
+mysqladmin	= /usr/local/mysql/bin/mysqladmin
+user 		= root
+
+[mysqld1]
+port		= 3306
+	
+[mysqld2]
+port		= 3307
+socket 		= /temp/mysql2.sock
+datadir		= /usr/local/var/mysql2
+ 
+[mysqld3]
+port		= 3308
+socket 		= /temp/mysql3.sock
+datadir		= /usr/local/var/mysql3
+  
+[mysqld]
+
+步骤6: 查看数据库的状态。命令执行如下。
+[root@localhost ~]# mysqld_multi --defaults-extra-file=/etc/my.cnf report
+ 
+步骤7: 使用mysqld_multi启动MySQL服务器，命令执行如下。
+[root@localhost mysql1]# mysqld_multi --defaults-extra-file=/etc/my.cnf stop
+[root@localhost mysql1]# mysqld_multi --defaults-extra-file=/etc/my.cnf start
+[root@localhost mysql1]# mysqld_multi --defaults-extra-file=/etc/my.cnf report
+
+步骤8: 下面测试下MySQL服务器的状态，命令执行如下。
+[root@localhost ~]# netstat -an|grep 330 
+
+步骤9: 下面登录查看下MySQL数据库，命令执行如下。
+[root@localhost data]# mysql -u root -p -P 3306
+[root@localhost data]# mysql -u root -p -P 3307
+[root@localhost data]# mysql -u root -p -P 3308
+
+步骤10: 直接登录MySQL服务器，执行show variable 命令发现三个MySQL服务器的pid_file，socket参数都一样，命令执行如下。
+mysql> show variables like 'socket';
+mysql> show variables like 'pid%';
+
+此时，可以通过登录MySQL服务器自带参数，可以解决以上的问题。命令执行如下所示。
+[root@localhost ~]# mysql -u root -S /tmp/mysql2.sock
+
+
+[18.3.3]  mysqld_multi实现单机主从复制
+
+步骤1: 使用mysqld_multi开启上一节已经设定好的三个MySQL服务，命令执行如下。
+[root@localhost ~]# mysqld_multi --defaults-extra-file=/etc/my.cnf start 1-3   
+[root@localhost ~]# netstat -an|grep 330
+
+步骤2: 登录Master主服务器，设置一个复制使用的账户，并授予REPLICATION SLAVE权限。这里创建一个复制用户rep1。
+[root@localhost ~]# mysql -u root -p -P 3306
+mysql> grant replication slave on *.* to 'repl'@'localhost' identified by '123';
+mysql> grant replication slave on *.* to 'repl'@'%' identified by '123';
+ 
+步骤3: 修改Master主数据库服务器的配置文件my.cnf，开启BINLOG，并设置server-id的值。需要重启服务器之后才生效。
+[root@localhost ~]#vi /etc/my.cnf
+[mysqld1]
+port		= 3306 
+log-bin = /usr/local/var/mysql1/mysql-bin
+server-id = 1
+
+[root@localhost ~]# mysqld_multi --defaults-extra-file=/etc/my.cnf stop 1-3   
+[root@localhost ~]# mysqld_multi --defaults-extra-file=/etc/my.cnf start 1-3 
+
+步骤4: 在Master主服务器上，设置度锁定有效，这个操作为了确保没有数据库操作，以便获得一致性的快照。
+[root@localhost ~]# mysql -u root -P 3306 -S /tmp/mysql.sock
+mysql> flush tables with read lock;
+
+步骤5: 用show master status 命令查看日志情况，查询得到主服务器上当前的二进制日志名和偏移量值。这个操作的目的是为了从数据库启动以后，从这个点开始进行数据的恢复。
+mysql> show master status \G;
+
+步骤6: 主数据库服务此时可以做一个备份，可以在服务器停止的情况下直接使用系统拷贝命令。
+[root@localhost mysql1]#tar –cvf data.tar data
+
+步骤7: 主数据库备份完成后，主数据库恢复写操作，命令执行如下。
+mysql> unlock tables;
+mysql> start slave;
+
+步骤8: 接下来继续编辑/etc/my.cnf文件，具体配置项如下。
+# The MySQL server
+[mysqld_multi]
+mysqld 	        = /usr/local/mysql/bin/mysqld_safe
+mysqladmin	= /usr/local/mysql/bin/mysqladmin
+user 		= root
+[mysqld1]
+port		= 3306
+log-bin		= /usr/local/var/mysql1/mysql-bin
+server-id	= 1
+
+[mysqld2]
+port		= 3307
+socket 		= /temp/mysql2.sock
+datadir		= /usr/local/var/mysql2
+log-bin		= /usr/local/var/mysql2/mysql-bin
+server-id	= 2
+  
+[mysqld3]
+port		= 3308
+socket 		= /temp/mysql3.sock
+datadir		= /usr/local/var/mysql3
+log-bin		= /usr/local/var/mysql3/mysql-bin
+server-id	= 3
+
+[mysqld]
+
+步骤9: 重启Master主服务器，命令执行如下。
+[root@localhost ~]# mysqld_multi --defaults-extra-file=/etc/my.cnf stop 1-3
+[root@localhost ~]# mysqld_multi --defaults-extra-file=/etc/my.cnf start 1-3
+[root@localhost ~]# mysqld_multi --defaults-extra-file=/etc/my.cnf report
+
+步骤10: 对从数据库服务器做相应设置，此时需要制定复制使用的用户，主数据的IP地址，端口以及开始复制的日志文件和位置等，具体设置如下。
+[root@localhost ~]# mysql -uroot -p -P 3307 -S /temp/mysql2.sock
+mysql> show variables like '%log_bin%';
+mysql> stop slave;
+mysql> change master to
+    -> master_host='127.0.0.1',
+    -> master_user='repl',
+    -> master_password='123',
+    -> master_log_file='mysql-bin.000001',
+    -> master_log_pos=120;
+
+
+步骤11: 在从服务器上执行show slave status\G命令查询从服务器的状态，命令执行如下。
+mysql> start slave;
+mysql> show slave status \G;
+
+步骤12: 此时发现从服务器已经成功设置，此时也可以执行show processlist \G命令查询从服务器的进程状态，命令执行如下。
+mysql> show processlist \G;
+
+步骤13: 此时可以测试复制服务的正确性，在Master主数据库上执行一个更新操作，观察是否在从服务器上同步，下面在主数据库的test库上创建一个测试表，然后插入数据，命令执行如下。
+[root@localhost ~]# mysql -uroot -p -P 3306 -S /tmp/mysql.sock 
+mysql> use test; 
+mysql> show tables; 
+
+mysql> create table repl_test(id int); 
+mysql> insert into repl_test values(1),(2); 
+
+步骤14: 在从服务器上检测新的表是否被创建，数据是否同步，执行命令如下。
+[root@localhost ~]# mysql -uroot -P 3307 -S /temp/mysql2.sock 
+mysql> use test;  
+mysql> show tables;  
+mysql> select * from repl_test; 
+
+ 
+[18.3.4]  不同服务器之间实现主从复制
+
+步骤1: 确保主从服务器上安装了相同版本的数据库，设定主服务器的IP是192.168.1.100，从服务器的IP是192.168.1.101。
+
+步骤2: 登录主服务器，设置一个复制使用的账户，并授予REPLICATION SLAVE权限。这里创建一个复制用户rep1。
+mysql> grant replication slave on *.* to 'rep1'@'192.168.1.101' identified by '123';
+
+步骤3: 修改主数据库服务器的配置文件my.cnf，开启BINLOG，并设置server-id的值。需要重启服务器之后才生效。
+my.cnf中修改
+[mysqld]
+log-bin = /usr/local/var/mysql1/mysql-bin
+server-id = 1
+
+步骤4: 在主服务器上，设置度锁定有效，这个操作为了确保没有数据库操作，以便获得一致性的快照。
+mysql> flush tables with read lock;
+Query OK, 0 rows affected (0.00 sec)
+
+步骤5: 查询主服务器上当前的二进制日志名和偏移值。
+mysql> show master status;
+
+步骤6: 主数据库停止更新操作，需要生成数据库的备份，可以通过mysqldump导出数据或者使用ibbackup工具进行数据库的备份，主数据库备份完成后，主数据库恢复写操作，命令执行如下。
+mysql> unlock tables;
+Query OK, 0 rows affected (0.00 sec)
+
+步骤7: 修改从数据库的配置文件my.cnf，增加server-id参数。
+my.cnf
+[mysqld]
+Server-id = 2 
+
+步骤8: 修改从数据库的配置文件my.cnf，增加server-id参数。Server-id的值唯一的，不能和主数据库的配置相同，如果有多个从数据库，每个从数据库都必须有自己唯一的server-id值。
+[root@localhost ~]# mysqld_safe --skip-slave-start &
+
+步骤9: 对从数据库服务器做相应的设置，指定复制使用的用户，主数据库服务器的IP、端口以及开始执行复制的日志文件和位置定，命令执行如下。
+mysql> stop slave; 
+
+mysql> change master to
+    -> master_host='192.168.1.100',
+    -> master_user='rep1',
+    -> master_password='123',
+    -> master_log_file='mysql-bin.000029',
+    -> master_log_pos=109; 
+
+步骤10: 在从服务器上，启动slave线程。
+mysql> start slave;
+
+步骤11: 在从服务器上执行show slave status\G命令查询从服务器的状态。
+mysql> show slave status\G;
+此时也可以执行show processlist \G命令查询从服务器的进程状态。
+mysql> show processlist \G;
+
+[18.3.6]  指定复制的数据库或者表
+
+1. replicate-do- table和replicate-ignore-table的用法。
+步骤1: 启动主从数据库，首先在主数据库test库中创建两个表，rep_t1和rep_t2表。
+[root@localhost ~]# mysqld_multi --defaults-extra-file=/etc/my.cnf start 1-3
+[root@localhost ~]# mysql -uroot -p -P 3306 -S /tmp/mysql.sock
+
+mysql> show databases; 
+mysql> show tables; 
+mysql> select * from rep_t1;   
+mysql> select * from rep_t2; 
+
+步骤2: 关闭数据库服务器，编辑从数据库配置参数replicate-do-table=test.rep_t1指定test数据库中的rep_t1表被复制，replicate-ignore-table=test.rep_t2指定test库中的rep_t2表不会被复制数据。
+[root@localhost ~]# mysqld_multi --defaults-extra-file=/etc/my.cnf stop 1-3
+
+Vi /etc/my.cnf
+[mysqld2]
+...
+port		= 3307
+socket		= /temp/mysql2.sock
+server-id = 2
+replicate-do-table=test.rep_t1
+replicate-ignore-table=test.rep_t2
+
+步骤3: 启动主从服务器，命令执行如下。
+mysql> start slave; 
+mysql> show slave status\G;
+
+步骤4: 主从服务器都成功启动后，下面开始更新主数据库test库中的rep_t1表和rep_t2表，修改主数据库中的数据如下。
+mysql> insert into rep_t1 values(888);  
+mysql> insert into rep_t2 values(888);
+
+步骤5: 登录从数据库，查询test库中的表rep_t1和rep_t2的数据更新的情况，具体查询语句如下。
+[root@localhost ~]# mysql -u root -P 3307 -S /temp/mysql2.sock 
+mysql> use test;
+mysql> show tables;   
+mysql> select * from rep_t1;  
+mysql> select * from rep_t2;
+
+2.replicate-do-db和replicate-ignore-db的用法。
+
+步骤1: 启动主从数据库服务器，查询主数据库中的主要有哪些数据库库，命令执行如下。
+[root@localhost ~]# mysqld_multi --defaults-extra-file=/etc/my.cnf start 1-3 
+[root@localhost ~]# mysql -uroot -P 3306 -S /tmp/mysql.sock 
+mysql> show databases; 
+
+步骤2: 使用mysqldump工具将主数据库中的所有信息导出到all.sql脚本文件中。
+[root@localhost ~]# mysqldump -u root -P 3306 -S /tmp/mysql.sock --all-databases >all.sql
+
+步骤3: 登录从数据库，导入all.sql中的数据，保持从服务器与主数据库数据一致。
+[root@localhost ~]# mysql -uroot -P 3307 -S /temp/mysql2.sock   
+mysql> show databases; 
+mysql> source ./all.sql 
+mysql> show databases; 
+ 
+步骤4: 关闭从数据库，然后编辑数据库的配置文件，replicate-do-db表示从服务器可以复制的数据库的名字，如果有多个数据库，那么可以重复写多个replicate-do-db配置，replicate-ignore-db表示从服务器复制过程中忽略复制该配置设置的数据库名称。
+[root@localhost ~]# mysqld_multi --defaults-extra-file=/etc/my.cnf stop 1-3
+
+vi /etc/my.cnf
+[mysqld2]
+....
+port		= 3307
+socket		= /tmp/mysql2.sock
+server-id = 2
+#replicate-do-table=test.rep_t1
+#replicate-ignore-table=test.rep_t2
+replicate-do-db=test
+replicate-do-db=cc
+replicate-ignore-db=tt
+
+步骤5: 启动主从数据库，然后在主数据库cc库中增加表cc_t1表，在tt库中增加表tt_t1表。
+[root@localhost ~]# mysqld_multi --defaults-extra-file=/etc/my.cnf start 1-3 
+mysql> use cc;   
+mysql> create table cc_t1(data int);  
+mysql> use tt;              
+mysql> create table tt_t1(data int);
+
+步骤6: 登录从数据库，查询数据库cc库和tt库相应的数据是否更新。
+[root@localhost ~]# mysql -uroot -P 3307 -S /tmp/mysql2.sock
+mysql> show databases; 
+mysql> use cc; 
+mysql> show tables;  
+mysql> use tt; 
+mysql> show tables;
+
+[18.4]  查看Slave的复制进度 
+
+步骤1: 在主服务器上插入一个包含当前时间戳的记录，命令执行如下。
+mysql> alter table rep_t3 add column createtime datetime; 
+mysql> insert into rep_t3 values(1,now());  
+mysql> select * from rep_t3;
+
+步骤2: 从服务器的IO线程停止下来，使得从数据库服务器暂时不写中继日志，停止时执行的SQL就是最后执行的SQL，命令执行如下。
+mysql> stop slave; 
+mysql> select * from rep_t3;
+mysql> select now();
+
+步骤3: 从数据库服务器上执行show processlist查看SQL线程的时间，这个时间说明了主服务器最后执行的更新操作大概是主服务器46秒前的更新操作，命令执行如下。
+mysql> stop slave io_thread;  
+mysql> show processlist \G;
+ 
+18.5.1  了解服务器的状态
+
+步骤1: 一般使用show slave status命令来检查从服务器，如下例所示。
+mysql> show slave status\G;
+
+
+18.5.2  服务器复制出错的原因
+
+问题一：出现”log event entry exceeded max_allowed_pack”错误。
+如果在应用中出现使用大的BLOG列或者长字符串，那么在从服务器上回复时，可能会出现”log event entry exceeded max_allowed_pack”的错误，这是因为含有大文本的记录无法通过网络进行传输而导致错误，解决方法是在主从服务器上添加max_allowed_packet参数，该参数默认设置是1MB，如下。
+mysql> SHOW VARIABLES LIKE 'MAX_ALLOWED_PACKET'; 
+mysql> SET @@global.max_allowed_packet=16777216;
+
+
+问题二：多主复制时的自增长变量冲突问题。
+大多数情况下使用一台主服务器对一台或者多台从服务器，但是在某些情况下，可能会存在多个服务器配置为复制主服务器，使用auto_increment时应采取特殊步骤以防止键值冲突，否则插入行时多个主服务器会视图使用相同的auto_increment值。
+
+步骤1: 创建表auto_t，系统默认的auto_increment_increment和auto_increment_offset参数都是1，增加数据默认的也是增加幅度为1增加，命令执行如下。
+mysql> create table auto_t( data int primary key auto_increment )engine=myisam default charset=gbk;
+mysql> show variables like 'auto_inc%';
+mysql> insert into auto_t values(null),(null),(null);
+mysql> select * from auto_t;
+ 
+步骤2: 重新设置参数auto_increment_increment的值为10，然后插入数据，命令执行如下。
+mysql> set @@auto_increment_increment=10; 
+mysql> show variables like 'auto_inc%';  
+mysql> insert into auto_t values(null),(null),(null); 
+mysql> select * from auto_t;
+
+步骤3: 重新设置参数auto_increment_offset的值为5，再插入数据，命令执行如下。
+mysql> set @@auto_increment_offset=5;  
+mysql> insert into auto_t values(null),(null),(null);  
+mysql> select * from auto_t;
+
+
+[18.6]  切换主从服务器
+
+步骤1: 首先要确保所有的从数据库都已经执行了relay log中的全部更新，看从数据库的状态是否是Has read all relay log，是否更新都已经执行完成。
+mysql> stop slave IO_THREAD; 
+mysql> SHOW PROCESSLIST \G;
+
+步骤2: 在从数据库B上停止slave服务，然后执行reset master重置成主数据库。
+mysql> stop slave; 
+mysql> reset master; 
+
+如果binlog没有设置，此时需要配置log-bin,在[mysql2]后面的配置选项添加log-bin选项，修改如下所示。
+[mysqld2]
+…
+log-bin = /usr/local/var/mysql2/mysql-bin
+配置完成后，重启数据库服务，登录数据库B，然后执行如下命令开启主数据库功能.
+mysql> stop slave;  
+mysql> reset master; 
+
+步骤3: 在从数据库B上添加具有replication权限的用户rep1，查询主数据库状态，命令执行如下。
+mysql> grant replication slave on *.* to 'rep1'@'localhost' identified by '123';
+mysql> show master status;
+
+步骤4: 在从数据库C上配置复制的参数，具体配置如下。
+mysql> change master to
+    -> master_host='127.0.0.1', 
+    -> master_user='rep1',
+    -> master_password='123',
+    -> master_port=3307,
+    -> master_log_file='mysql-bin.000002',
+    -> master_log_pos=98;    
+mysql> start slave;
+ 
+步骤5: 在从数据库C上执行show slave status命令查看从数据库服务是否成功启动。
+mysql> show slave status \G;
+
+
+步骤6: 在主数据库B和从数据库C上面测试数据库是否成功设置复制功能，首先查看主数据库B中test库中的表的情况，命令执行如下。
+mysql> use test; 
+mysql> show tables;
+  
+步骤7: 在主数据库B中增加表rep_t3，命令执行如下。
+mysql> create table rep_t3(data int);
+
+
+步骤8: 在从数据库C中查询，看表是否成功复制到从数据库，命令执行如下。
+mysql> show tables; 
+
+
+
+

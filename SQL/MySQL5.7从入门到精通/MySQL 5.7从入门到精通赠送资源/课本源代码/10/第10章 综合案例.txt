@@ -1,0 +1,91 @@
+创建一个sch表，并且向sch表中插入表格中的数据，代码如下：
+CREATE TABLE sch(id INT, name VARCHAR(50),glass VARCHAR(50));
+INSERT INTO sch VALUE(1,'xiaoming','glass 1'), (2,'xiaojun','glass 2');
+通过命令DESC命令查看创建的表格，结果如下：
+ DESC sch;
++-------+-----------------+------+-------+---------+-------+
+| Field | Type        | Null | Key  | Default | Extra |
++-------+-----------------+------+-------+---------+-------+
+| id    | int(11)      | YES |      | NULL |      |
+| name  | varchar(50)  | YES |     | NULL |      |
+| glass  | varchar(50)  | YES |     | NULL |      |
++--------+----------------+------+-------+---------+-------+
+3 rows in set (0.00 sec)
+通过SELECT * FROM sch来查看插入表格的内容，结果如下：
++------+------------+-----------+
+| id   | name    | glass   |
++------+------------+-----------+
+|    1 | xiaoming | glass 1  |
+|    2 | xiaojun  | glass 2  |
++------+------------+-----------+
+  创建一个存储函数用来统计表sch中的记录数。
+创建一个可以统计表格内记录条数的存储函数，函数名为count_sch()，代码如下：
+CREATE FUNCTION count_sch()
+RETURNS INT
+RETURN (SELECT COUNT(*) FROM sch);
+执行的结果如下：
+ DELIMITER //
+ CREATE FUNCTION count_sch()
+     RETURNS INT
+     RETURN (SELECT COUNT(*) FROM sch);
+     //
+Query OK, 0 rows affected (0.12 sec)
+ SELECT count_sch() //
+ DELIMITER ;
++-------------+
+| count_sch() |
++-------------+
+|      2   |
++-------------+
+1 row in set (0.05 sec)
+创建的储存函数名称为count_sch，通过SELCET count_sch()查看函数执行的情况，这个表中只有两条记录，得到的结果也是两条记录，说明存储函数成功的执行。
+  创建一个存储过程，通过调用存储函数的方法来获取表sch中的记录数和sch表中id的和。
+创建一个存储过程add_id在同时使用前面创建的存储函数返回表sch中的记录数，计算出表中所有的id之和。代码如下：
+CREATE PROCEDURE add_id(out count INT)
+BEGIN
+DECLARE itmp INT;
+DECLARE cur_id CURSOR FOR SELECT id FROM sch; 
+DECLARE EXIT HANDLER FOR NOT FOUND CLOSE cur_id;
+
+SELECT count_sch() INTO count;
+
+SET @sum=0;
+OPEN cur_id;
+REPEAT
+FETCH cur_id INTO itmp;
+IF itmp<10
+THEN SET  @sum=  @sum+itmp;
+END IF;
+UNTIL 0 END REPEAT;
+CLOSE cur_id;
+
+END ;
+这个存储过程的代码中使用到了变量的声明、光标、流程控制、在存储过程中调用存储函数等知识点，结果应该是两条记录，id之和为3，记录条数是通过上面的存储函数count_sch()获取的，是在存储过程中调用了存储函数。代码的执行情况如下：
+ DELIMITER //
+ CREATE PROCEDURE add_id(out count INT)
+     BEGIN
+     DECLARE itmp INT;
+     DECLARE cur_id CURSOR FOR SELECT id FROM sch;
+     DECLARE EXIT HANDLER FOR NOT FOUND CLOSE cur_id;
+     SELECT count_sch() INTO count;
+     SET @sum=0;
+     OPEN cur_id;
+     REPEAT
+     FETCH cur_id INTO itmp;
+     IF itmp<10
+     THEN SET  @sum=  @sum+itmp;
+     END IF;
+     UNTIL 0 END REPEAT;
+     CLOSE cur_id;
+     END //
+Query OK, 0 rows affected (0.00 sec)
+
+ SELECT @a, @sum  //
++------+--------+
+| @a  | @sum |
++------+--------+
+|    2 |    3 |
++------+-------+
+1 row in set (0.00 sec)
+ DELIMITER ;
+表sch中只有两条记录，所有id的之和为3，和预想的执行结果完全相同。这个存储过程创建了一个cur_id的光标，使用这个光标来获取每条记录的id，使用REPEAT循环语句来实现所有id号相加。

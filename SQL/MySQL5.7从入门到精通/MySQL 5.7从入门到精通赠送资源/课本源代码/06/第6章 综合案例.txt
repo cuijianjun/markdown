@@ -1,0 +1,115 @@
+1.案例目的
+使用各种函数操作数据，掌握各种函数的作用和使用方法。
+2.案例操作过程
+  使用数学函数RAND()生成3个10以内的随机整数。
+RAND()函数生成的随机数在0~1之间，要生成0~10之间的随机数，RAND()需要乘以10，如果要求是整数，则还必须舍去结果的小数部分，在这里使用ROUND()函数，执行过程如下：
+SELECT ROUND(RAND() * 10),  ROUND(RAND() * 10), ROUND(RAND() * 10); 
++----------------------------+-------------------------------+----------------------------+
+| ROUND(RAND() * 10) | ROUND(RAND() * 10) | ROUND(RAND() * 10) |
++----------------------------+-------------------------------+----------------------------+
+|                  2 |                    6 |                   5 |
++----------------------------+--------------------------------+----------------------------+ 
+1 row in set (0.01 sec)
+  使用SIN()，COS()，TAN()，COT()函数计算三角函数值，并将计算结果转换成整数值。
+MySQL中三角函数计算出来的值并不一定是整数值，需要使用数学函数将其转换为整数，可以使用的数学函数有ROUND()，FLOOR() 等，执行过程如下：
+ SELECT PI(), sin(PI()/2),cos(PI()), ROUND(tan(PI()/4)), FLOOR(cot(PI()/4));
++-----------+-------------+-----------+-------------------------+--------------------------+
+| PI()     | sin(PI()/2) | cos(PI()) | ROUND(tan(PI()/4)) | FLOOR(cot(PI()/4)) |
++-----------+-------------+-----------+-------------------------+--------------------------+
+| 3.141593 |        1 |      -1 |                1 |                1 |
++-----------+-------------+-----------+-------------------------+--------------------------+
+  创建表，并使用字符串和日期函数，对字段值进行操作。
+（1）创建表member，其中包含3个字段，分别为AUTO_INCREMENT约束的m_id字段，VARCHAR类型的m_FN字段，VARCHAR类型的m_LN字段，DATETIME类型的m_birth字段和VARCHAR类型的m_info字段。
+（2）插入一条记录，m_id值为默认，m_FN值为“Halen”，m_LN值为“Park”，m_birth值为1970-06-29，m_info值为“GoodMan”。
+（3）返回m_FN的长度，返回第一条记录中的人的全名，将m_info字段值转换成小写字母。将m_info的值反向输出。
+（4）计算第一条记录中人的年龄，并计算m_birth字段中的值在那一年中的位置，按照“Saturday October 4th 1997”格式输出时间值。
+（5）插入一条新的记录，m_FN值为“Samuel”，m_LN值为“Green”，m_birth值为系统当前时间，m_info为空。使用LAST_INSERT_ID()查看最后插入的ID值。
+操作过程如下：
+（1）创建表member，输入语句如下：
+CREATE TABLE member 
+( 
+m_id    INT AUTO_INCREMENT PRIMARY KEY,
+m_FN   VARCHAR(100),
+m_LN   VARCHAR(100),
+m_birth  DATETIME,
+m_info   VARCHAR(255) NULL
+);
+执行结果如下：
+ CREATE TABLE member
+     (
+     m_id    INT AUTO_INCREMENT PRIMARY KEY,
+     m_FN   VARCHAR(100),
+     m_LN   VARCHAR(100),
+     m_birth  DATETIME,
+     m_info   VARCHAR(255) NULL
+     );
+Query OK, 0 rows affected (0.01 sec)
+（2）插入一条记录，输入语句如下：
+INSERT INTO member VALUES (NULL, 'Halen ', 'Park', '1970-06-29', 'GoodMan ');
+使用SELECT语句查看插入结果，
+ SELECT * FROM member;
++------+----------+--------+-------------------------+--------------+
+| m_id | m_FN  | m_LN | m_birth           | m_info   |
++------+----------+--------+-------------------------+--------------+
+|    1 | Halen  | Park  | 1970-06-29 00:00:00 | GoodMan |
++------+----------+--------+-------------------------+--------------+
+1 row in set (0.00 sec)
+（3）返回m_FN的长度，返回第1条记录中人的全名，将m_info字段值转换成小写字母，将m_info的值反向输出。
+SELECT LENGTH(m_FN), CONCAT(m_FN, m_LN), 
+LOWER(m_info), REVERSE(m_info) FROM member;
+执行结果如下：
+ SELECT LENGTH(m_FN), CONCAT(m_FN, m_LN),
+     LOWER(m_info), REVERSE(m_info) FROM member;
++----------------------+------------------------------+----------------------+-------------------------+
+| LENGTH(m_FN) | CONCAT(m_FN, m_LN) | LOWER(m_info) | REVERSE(m_info) |
++----------------------+------------------------------+-----------------------+------------------------+
+|              6 | Halen Park           | goodman        |  naMdooG       |
++----------------------+------------------------------+-----------------------+-------------------------+
+1 row in set (0.00 sec)
+（4）计算第一条记录中人的年龄，并计算m_birth字段中的值在那一年中的位置，按照“Saturday October 4th 1997”格式输出时间值。
+SELECT YEAR(CURDATE())-YEAR(m_birth) AS age, DAYOFYEAR(m_birth) AS days, DATE_FORMAT(m_birth, '%W %D %M %Y') AS birthDate FROM member;
+语句执行结果如下：
+ SELECT YEAR(CURDATE())-YEAR(m_birth) AS age,
+     DAYOFYEAR(m_birth) AS days,
+     DATE_FORMAT(m_birth, '%W %D %M %Y') AS birthDate
+     FROM member;
++------+------+-------------------------------+
+| age  | days | birthDate             |
++------+------+-------------------------------+
+|   41 |  180 | Monday 29th June 1970 |
++------+------+-------------------------------+
+1 row in set (0.00 sec)
+（5）插入一条新的记录，m_FN值为“Samuel”，m_LN值为“Green”，m_birth值为系统当前时间，m_info为空。使用LAST_INSERT_ID()查看最后插入的ID值。
+INSERT INTO member VALUES (NULL, 'Samuel', 'Green', NOW(),NULL);
+执行结果如下：
+ INSERT INTO member VALUES (NULL, 'Samuel', 'Green', NOW(),NULL);
+Query OK, 1 row affected (0.00 sec)
+使用SELECT语句查看插入结果：
+ SELECT * FROM member;
++------+----------+---------+-------------------------+--------------+
+| m_id | m_FN  | m_LN | m_birth           | m_info    |
++------+----------+---------+-------------------------+--------------+
+|    1 | Halen  | Park   | 1970-06-29 00:00:00 | GoodMan |
+|    2 | Samuel | Green  | 2013-03-24 15:00:01 | NULL    |
++------+----------+---------+-------------------------+----------------+
+2 rows in set (0.00 sec)
+可以看到，表中现在有两条记录，接下来使用LAST_INSERT_ID()函数查看最后插入的ID值，输入语句如下：
+ SELECT LAST_INSERT_ID();
++--------------------------+
+| LAST_INSERT_ID() |
++--------------------------+
+|                 2 |
++--------------------------+
+1 row in set (0.00 sec)
+最后插入的为第二条记录，其ID值为2，因此返回值为2。
+  使用CASE进行条件判断，如果m_birth小于2000年，显示“old”，如果m_birth大于2000年，则显示“young”，输入语句如下：
+ SELECT m_birth, CASE WHEN YEAR(m_birth) < 2000  THEN  'old'
+     WHEN YEAR(m_birth)  2000 THEN  'young'
+     ELSE 'not born' END AS status FROM member;
++-------------------------+---------+
+| m_birth           | status  |
++-------------------------+---------+
+| 1970-06-29 00:00:00 | old    |
+| 2013-03-24 15:00:01 | young  |
++-------------------------+----------+
+2 rows in set (0.00 sec)

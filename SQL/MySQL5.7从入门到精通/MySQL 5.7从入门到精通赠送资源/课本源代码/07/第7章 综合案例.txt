@@ -1,0 +1,259 @@
+
+  创建数据表employee和dept。
+CREATE TABLE dept
+(
+d_no         INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
+d_name       VARCHAR(50),
+d_location     VARCHAR(100)
+);
+由于employee表dept_no依赖于父表dept的主键d_no，因此需要先创建dept表，然后创建employee表。
+CREATE TABLE employee
+(
+e_no        INT NOT NULL PRIMARY KEY,
+e_name      VARCHAR(100) NOT NULL,
+e_gender    CHAR(2) NOT NULL,
+dept_no    INT NOT NULL,
+e_job       VARCHAR(100) NOT NULL,
+e_salary   SMALLINT NOT NULL,
+hireDate   DATE,
+CONSTRAINT dno_fk FOREIGN KEY(dept_no)
+REFERENCES dept(d_no)
+);
+  将指定记录分别插入两个表中。
+向dept表中插入数据，SQL语句如下：
+INSERT INTO dept 
+VALUES (10, 'ACCOUNTING', 'ShangHai'),
+(20, 'RESEARCH ', 'BeiJing '),
+(30, 'SALES ', 'ShenZhen '),
+(40, 'OPERATIONS ', 'FuJian ');
+向employee表中插入数据，SQL语句如下：
+INSERT INTO employee 
+VALUES (1001, 'SMITH', 'm',20, 'CLERK',800,'2005-11-12'),
+(1002, 'ALLEN', 'f',30, 'SALESMAN', 1600,'2003-05-12'),
+(1003, 'WARD', 'f',30, 'SALESMAN', 1250,'2003-05-12'),
+(1004, 'JONES', 'm',20, 'MANAGER', 2975,'1998-05-18'),
+(1005, 'MARTIN', 'm',30, 'SALESMAN', 1250,'2001-06-12'), 
+(1006, 'BLAKE', 'f',30, 'MANAGER', 2850,'1997-02-15'),
+(1007, 'CLARK', 'm',10, 'MANAGER', 2450,'2002-09-12'),
+(1008, 'SCOTT', 'm',20, 'ANALYST', 3000,'2003-05-12'),
+(1009, 'KING', 'f',10, 'PRESIDENT', 5000,'1995-01-01'),
+(1010, 'TURNER', 'f',30, 'SALESMAN', 1500,'1997-10-12'),
+(1011, 'ADAMS', 'm',20, 'CLERK', 1100,'1999-10-05'),
+(1012, 'JAMES', 'm',30, 'CLERK', 950,'2008-06-15');
+  在employee表中，查询所有记录的e_no、e_name和e_salary字段值。
+SELECT e_no, e_name, e_salary;
+执行结果如下：
+ SELECT e_no, e_name, e_salary FROM employee;
++------+--------------+-------------+
+| e_no | e_name  |  e_salary  |
++------+--------------+--------------+
+| 1001 | SMITH  |      800   |
+| 1002 | ALLEN  |     1600   |
+| 1003 | WARD   |     1250   |
+| 1004 | JONES  |     2975   |
+| 1005 | MARTIN |     1250   |
+| 1006 | BLAKE  |     2850   |
+| 1007 | CLARK  |     2450   |
+| 1008 | SCOTT  |     3000   |
+| 1009 | KING   |     5000   |
+| 1010 | TURNER |     1500  |
+| 1011 | ADAMS  |     1100   |
+| 1012 | JAMES  |      950   |
++------+------------+-----------------+
+12 rows in set (0.00 sec)
+  在employee表中，查询dept_no等于10和20的所有记录。
+SELECT * FROM employee WHERE dept_no IN (10, 20);
+执行结果如下：
+
+ SELECT * FROM employee WHERE dept_no IN (10, 20);
++------+--------+---------+---------+----------+----------+-----------+
+| e_no | e_name | e_gender | dept_no | e_job   | e_salary  | hireDate  |
++------+--------+---------+---------+----------+----------+-----------+
+| 1001 | SMITH   | m        |      20  | CLERK     |      800 | 2005-11-12 |
+| 1004 | JONES   | m        |      20  | MANAGER  |     2975  | 1998-05-18 |
+| 1007 | CLARK   | m        |      10  | MANAGER  |     2450  | 2002-09-12 |
+| 1008 | SCOTT   | m        |      20  | ANALYST  |     3000  | 2003-05-12 |
+| 1009 | KING    | f        |      10  | PRESIDENT  |     5000 | 1995-01-01  |
+| 1011 | ADAMS   | m        |      20  | CLERK     |     1100  | 1999-10-05 |
++------+--------+---------+---------+----------+----------+-----------+
+6 rows in set (0.00 sec)
+  在employee表中，查询工资范围在800~2500之间的员工信息。
+SELECT * FROM employee WHERE e_salary BETWEEN 800 AND 2500;
+执行结果如下：
+  SELECT * FROM employee WHERE e_salary BETWEEN 800 AND 2500;
++------+-------------+----------------+------------+---------------+------------------+-----------+
+| e_no | e_name  | e_gender   |  dept_no  | e_job     |    e_salary   | hireDate |
++------+--------------+-----------------+---------+-----------------+--------------------+-----------+
+| 1001 | SMITH  | m          |      20  | CLERK    |     800     | 2005-11-12 |
+| 1002 | ALLEN  | f          |      30  | SALESMAN |    1600    | 2003-05-12 |
+| 1003 | WARD   | f          |      30  | SALESMAN |    1250    | 2003-05-12 |
+| 1005 | MARTIN | m          |      30  | SALESMAN |    1250   | 2001-06-12 |
+| 1007 | CLARK  | m          |      10  | MANAGER |     2450   | 2002-09-12 |
+| 1010 | TURNER | f          |      30  | SALESMAN |     1500   | 1997-10-12 |
+| 1011 | ADAMS  | m          |      20  | CLERK    |     1100   | 1999-10-05 |
+| 1012 | JAMES  | m          |      30  | CLERK    |     950    | 2008-06-15 |
++------+---------------+---------------+--------------+-----------------+----------------+------------+
+8 rows in set (0.00 sec)
+  在employee表中，查询部门编号为20的部门中的员工信息。
+SELECT * FROM employee WHERE dept_no = 20;
+执行结果如下：
+ SELECT * FROM employee WHERE dept_no = 20;
++------+-------------+-------------+----------------+-------------+----------------+------------+
+| e_no | e_name  | e_gender  |  dept_no  |  e_job    |  e_salary   | hireDate    |
++------+-------------+------------------+------------+--------------+----------------+------------+
+| 1001 | SMITH  | m          |      20  | CLERK   |      800   | 2005-11-12 |
+| 1004 | JONES  | m          |      20  | MANAGER |     2975  | 1998-05-18 |
+| 1008 | SCOTT  | m          |      20  | ANALYST |     3000  | 2003-05-12 |
+| 1011 | ADAMS  | m          |      20  | CLERK   |     1100   | 1999-10-05 |
++------+--------------+-----------------+-------------+--------------+------------------+------------+
+4 rows in set (0.00 sec)
+  在employee表中，查询每个部门最高工资的员工信息。
+SELECT dept_no, MAX(e_salary) FROM employee GROUP BY dept_no;
+执行结果如下：
+ SELECT dept_no, MAX(e_salary) FROM employee GROUP BY dept_no;
++---------+-------------------+
+| dept_no | MAX(e_salary) |
++---------+-------------------+
+|   10  |         5000 |
+|    20 |         3000 |
+|    30 |         2850 |
++---------+-----------------+
+3 rows in set (0.00 sec)
+  查询员工BLAKE所在部门和部门所在地。
+SELECT d_no, d_location  FROM dept WHERE d_no=
+(SELECT dept_no FROM employee WHERE e_name='BLAKE');
+执行结果如下：
+ SELECT e_name,d_no, d_location
+      FROM dept WHERE d_no=
+      (SELECT dept_no FROM employee WHERE e_name='BLAKE');
++------+------------+
+| d_no | d_location |
++------+------------+
+|  30 | ShenZhen |
++------+------------+
+1 row in set (0.00 sec)
+  使用连接查询，查询所有员工的部门和部门信息。
+SELECT e_no, e_name, dept_no, d_name,d_location
+FROM employee, dept WHERE dept.d_no=employee.dept_no;
+执行结果如下：
+ SELECT e_no, e_name, dept_no, d_name,d_location
+     FROM employee, dept WHERE dept.d_no=employee.dept_no;
++------+----------+------------------+------------------+-------------+
+| e_no | e_name |  dept_no    |   d_name     | d_location |
++------+------------+----------------+--------------------+------------+
+| 1001 | SMITH  |        20 | RESEARCH   | BeiJing     |
+| 1002 | ALLEN  |        30 | SALES      | ShenZhen    |
+| 1003 | WARD   |        30 | SALES      | ShenZhen   |
+| 1004 | JONES  |        20 | RESEARCH   | BeiJing    |
+| 1005 | MARTIN |        30 | SALES      | ShenZhen   |
+| 1006 | BLAKE  |        30 | SALES      | ShenZhen    |
+| 1007 | CLARK  |        10 | ACCOUNTING | ShangHai  |
+| 1008 | SCOTT  |        20 | RESEARCH   | BeiJing     |
+| 1009 | KING   |        10 | ACCOUNTING | ShangHai   |
+| 1010 | TURNER |        30 | SALES       | ShenZhen   |
+| 1011 | ADAMS  |        20 | RESEARCH  | BeiJing     |
+| 1012 | JAMES  |        30 | SALES       | ShenZhen    |
++------+---------------+------------+-------------------+-----------------+
+12 rows in set (0.00 sec)
+  在employee表中，计算每个部门各有多少名员工。
+SELECT dept_no, COUNT(*) FROM employee GROUP BY dept_no;
+执行结果如下：
+ SELECT dept_no, COUNT(*) FROM employee GROUP BY dept_no;
++---------+----------+
+| dept_no | COUNT(*) |
++---------+----------+
+|       10 |          2 |
+|       20 |          4 |
+|       30 |          6 |
++---------+----------+
+3 rows in set (0.00 sec)
+  在employee表中，计算不同类型职工的总工资数。
+SELECT e_job, SUM(e_salary) FROM employee GROUP BY e_job;
+执行结果如下：
+ SELECT e_job, SUM(e_salary) FROM employee GROUP BY e_job;
++---------------+-------------------------+
+| e_job      |  SUM(e_salary)  |
++-----------------+----------------------+
+| ANALYST   |            3000 |
+| CLERK     |            2850 |
+| MANAGER  |            8275 |
+| PRESIDENT  |            5000 |
+| SALESMAN  |            5600 |
++-------------------+-----------------------+
+5 rows in set (0.00 sec)
+  在employee表中，计算不同部门的平均工资。
+SELECT dept_no, AVG(e_salary) FROM employee GROUP BY dept_no;
+执行结果如下：
+ SELECT dept_no, AVG(e_salary) FROM employee GROUP BY dept_no;
++---------+-----------------+
+| dept_no | AVG(e_salary) |
++---------+----------------+
+|    10 |   3725.0000 |
+|    20 |   1968.7500 |
+|    30 |   1566.6667 |
++---------+---------------+
+3 rows in set (0.00 sec)
+  在employee表中，查询工资低于1500的员工信息。
+SELECT * FROM employee WHERE e_salary < 1500;
+执行过程如下：
+ SELECT * FROM employee WHERE e_salary < 1500;
++------+--------+----------+---------+----------+---------+------------+
+| e_no | e_name | e_gender | dept_no | e_job     | e_salary| hireDate   |
++------+--------+----------+---------+----------+---------+------------+
+| 1001 | SMITH  | m          |       20 | CLERK     |      800 | 2005-11-12 |
+| 1003 | WARD   | f          |       30 | SALESMAN  |     1250 | 2003-05-12 |
+| 1005 | MARTIN | m         |       30 | SALESMAN  |     1250 | 2001-06-12 |
+| 1011 | ADAMS  | m         |       20 | CLERK     |     1100 | 1999-10-05 |
+| 1012 | JAMES  | m          |       30 | CLERK     |      950 | 2008-06-15 |
++------+--------+----------+---------+----------+---------+------------+
+5 rows in set (0.00 sec)
+  在employee表中，将查询记录先按部门编号由高到低排列，再按员工工资由高到低排列。
+SELECT e_name,dept_no, e_salary 
+FROM employee ORDER BY dept_no DESC, e_salary DESC;
+执行过程如下：
+ SELECT e_name,dept_no, e_salary
+     FROM employee ORDER BY dept_no DESC, e_salary DESC;
++------------+--------------+-----------+
+| e_name  |  dept_no  | e_salary |
++-------------+-------------+------------+
+| BLAKE  |       30 |      2850 |
+| ALLEN  |       30 |      1600 |
+| TURNER |       30 |      1500 |
+| WARD   |       30 |      1250 |
+| MARTIN |       30 |      1250 |
+| JAMES  |       30 |       950 |
+| SCOTT  |       20 |      3000 |
+| JONES  |       20 |      2975 |
+| ADAMS  |       20 |      1100 |
+| SMITH  |       20 |       800 |
+| KING   |       10 |      5000 |
+| CLARK  |       10 |      2450 |
++------------+--------------+--------------+
+12 rows in set (0.00 sec)
+  在employee表中，查询员工姓名以字母’A’或’S’开头的员工的信息。
+SELECT * FROM employee WHERE e_name REGEXP '^[as]';
+执行过程如下：
+ SELECT * FROM employee WHERE e_name REGEXP '^[as]';
++------+------------+----------------+--------------+---------------+------------+-------------+
+| e_no | e_name  |  e_gender  |  dept_no  |  e_job    | e_salary  | hireDate  |
++------+-------------+----------------+-------------+----------------+-------------+------------+
+| 1001 | SMITH  | m          |       20 | CLERK     |    800  | 2005-11-12|
+| 1002 | ALLEN  | f          |       30 | SALESMAN |     1600 | 2003-05-12 |
+| 1008 | SCOTT  | m          |       20 | ANALYST  |     3000 | 2003-05-12 |
+| 1011 | ADAMS  | m          |       20 | CLERK     |   1100  | 1999-10-05|
++------+--------------+-------------------+----------+------------------+-----------+--------------+
+4 rows in set (0.00 sec)
+  在employee表中，查询到目前为止，工龄大于等于10年的员工信息。
+SELECT * FROM employee where YEAR(CURDATE()) -YEAR(hireDate) >= 10;
+执行过程如下：
+ SELECT * FROM employee where YEAR(CURDATE()) -YEAR(hireDate) >= 10;
++------+------------+--------------+------------+--------------------+---------------+-----------+
+| e_no | e_name  | e_gender  | dept_no  | e_job         | e_salary    | hireDate  |
++------+-------------+--------------+-------------+-------------------+----------------+-----------+
+| 1004 | JONES  | m         |       20 | MANAGER   |     2975  | 1998-05-18 |
+| 1005 | MARTIN | m         |       30 | SALESMAN  |     1250  | 2001-06-12 |
+| 1006 | BLAKE  | f         |       30 | MANAGER   |     2850  | 1997-02-15 |
+| 1009 | KING   | f         |       10 | PRESIDENT   |     5000  | 1995-01-01 |
+| 1010 | TURNER | f         |       30 | SALESMAN  |     1500  | 1997-10-12 |
+| 1011 | ADAMS  | m         |       20 | CLERK     |     1100  | 1999-10-05 |
++------+---------------+--------------+--------------+-----------------+---------------+--------------+

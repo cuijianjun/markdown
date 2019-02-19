@@ -1,0 +1,132 @@
+  创建数据表books，并定义各个字段。
+CREATE TABLE books
+(
+id      	INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+name   	VARCHAR(40) NOT NULL,
+authors  VARCHAR(200) NOT NULL,
+price    	INT(11) NOT NULL,
+pubdate 	YEAR NOT NULL,
+note    	VARCHAR(255) NULL,
+num    	INT NOT NULL DEFAULT 0
+);
+  将表8.2中的记录插入books表中，分别使用不同的方法插入记录，执行过程如下。
+表创建好之后，使用SELECT语句查看表中的数据，结果如下：
+ SELECT * FROM books;
+Empty set (0.00 sec)
+可以看到，当前表中为空，没有任何数据，下面向表中插入记录。
+（1）指定所有字段名称插入记录，SQL语句如下。
+ INSERT INTO books
+      (id, name, authors, price, pubdate,note,num)
+      VALUES(1, 'Tale of AAA', 'Dickes', 23, '1995', 'novel',11);
+Query OK, 1 row affected (0.02 sec)
+语句执行成功，插入了一条记录。
+（2）不指定字段名称插入记录，SQL语句如下。
+ INSERT INTO books
+      VALUES (2,'EmmaT','Jane lura',35,'1993', 'joke',22);
+Query OK, 1 row affected (0.01 sec)
+语句执行成功，插入了一条记录。
+使用SELECT语句查看当前表中的数据：
+ SELECT * FROM books;
++----+------------------+-----------+-------+---------+---------+-----+
+| id | name        | authors   | price | pubdate | note   | num |
++----+-----------------+-----------+---------+---------+---------+-----+
+|  1 | Tale of AAA | Dickes   |    23 |  1995 | novel  |  11  |
+|  2 | EmmaT    | Jane lura  |    35 |  1993 | joke   |  22  |
++----+----------------+-------------+---------+----------+-------+------+
+2 rows in set (0.00 sec)
+可以看到，两条语句分别成功插入了两条记录。
+（3）同时插入多条记录。
+使用INSERT语句将剩下的多条记录插入表中，SQL语句如下：
+ INSERT INTO books
+     VALUES(3, 'Story of Jane', 'Jane Tim', 40, '2001', 'novel', 0),
+     (4, 'Lovey Day', 'George Byron', 20, '2005', 'novel', 30),
+     (5, 'Old Land', 'Honore Blade', 30, '2010', 'law',0),
+     (6,'The Battle','Upton Sara',33,'1999', 'medicine',40),
+     (7,'Rose Hood','Richard Kale',28,'2008', 'cartoon',28);
+Query OK, 5 rows affected (0.00 sec)
+Records: 5  Duplicates: 0  Warnings: 0
+由结果可以看到，语句执行成功，总共插入了5条记录，使用SELECT语句查看表中所有的记录：
+ SELECT * FROM books;
++----+----------------------+--------------+---------+--------------+--------------+-----+
+| id | name            | authors   | price  |  pubdate   | note      | num |
++----+------------------------+-------------+----------+-------------+---------------+-----+
+|  1 | Tale of AAA    | Dickes     |    23  |    1995  | novel     |  11 |
+|  2 | EmmaT         | Jane lura    |    35  |    1993   | joke    |  22 |
+|  3 | Story of Jane    | Jane Tim     |    40  |    2001  | novel    |   0 |
+|  4 | Lovey Day      | George Byron |    20  |    2005  | novel    |  30 |
+|  5 | Old Land       | Honore Blade |    30  |    2010  | law      |   0 |
+|  6 | The Battle      | Upton Sara   |    33  |    1999  | medicine  |  40 |
+|  7 | Rose Hood      | Richard Kale |    28  |    2008  | cartoon   |  28 |
++----+-----------------------+-----------------+----------+--------------+-------------+-----+
+7 rows in set (0.00 sec)
+由结果可以看到，所有记录成功插入表中。
+  将小说类型（novel）的书的价格都增加5。
+执行该操作的SQL语句为：
+UPDATE books SET price = price + 5 WHERE note = ‘novel’;
+执行前先使用SELECT语句查看当前记录：
+ SELECT id, name, price, note FROM books WHERE note = 'novel';
++----+----------------------+-------+-------+
+| id | name            | price | note  |
++----+----------------------+-------+-------+
+|  1 | Tale of AAA    |    23 | novel |
+|  3 | Story of Jane    |    40 | novel |
+|  4 | Lovey Day      |    20 | novel |
++----+---------------+-------+-------+
+3 rows in set (0.00 sec)
+使用UPDATE语句执行更新操作：
+ UPDATE books SET price = price + 5 WHERE note = 'novel';
+Query OK, 3 rows affected (0.00 sec)
+Rows matched: 3  Changed: 3  Warnings: 0
+由结果可以看到，该语句对3条记录进行了更新，使用SELECT语句查看更新结果：
+ SELECT id, name, price, note FROM books WHERE note = 'novel';
++----+-------------------+-------+-------+
+| id | name         | price | note  |
++----+------------------+----------+-------+
+|  1 | Tale of AAA  |     28 | novel |
+|  3 | Story of Jane  |     45 | novel |
+|  4 | Lovey Day   |     25 | novel |
++----+-----------------+-----------+-------+
+对比可知，price的值都在原来的价格之上增加了5。
+  将名称为EmmaT的书的价格改为40，并将说明改为drama。
+修改语句为：
+UPDATE books SET price=40,note= 'drama 'WHERE name= 'EmmaT ';
+执行修改前，使用SELECT语句查看当前记录：
+ SELECT name, price, note FROM books WHERE name='EmmaT';
++---------+-------+------+
+| name  | price | note |
++----------+-------+------+
+| EmmaT |  35 | joke |
++---------+-------+------+
+1 row in set (0.00 sec)
+下面执行修改操作：
+ UPDATE books SET price=40,note='drama' WHERE name='EmmaT';
+Query OK, 1 row affected (0.00 sec)
+Rows matched: 1  Changed: 1  Warnings: 0
+结果显示修改了一条记录，使用SELECT查看执行结果：
+ SELECT name, price, note FROM books WHERE name='EmmaT';
++---------+--------+-------+
+| name  |  price | note  |
++---------+---------+-------+
+| EmmaT |  40  | drama |
++---------+---------+-------+
+1 row in set (0.00 sec)
+可以看到，price和note字段的值已经改变，修改操作成功。
+  删除库存为0的记录。
+删除库存为0的语句为：
+DELETE FROM books WHERE num=0;
+删除之前使用SELECT语句查看当前记录：
+ SELECT * FROM books WHERE num=0;
++----+----------------+----------------+---------+---------+-------+-----+
+| id | name        | authors    | price  | pubdate |  note | num |
++----+-----------------+---------------+----------+---------+-------+-----+
+|  3 | Story of Jane | Jane Tim    |    45 |  2001 | novel  |   0 |
+|  5 | Old Land    | Honore Blade |   30 |  2010 |  law  |   0 |
++----+------------------+----------------+--------+---------+--------+-----+
+2 rows in set (0.00 sec)
+可以看到，当前有两条记录的num值为0，下面使用DELETE语句删除这两条记录，SQL语句如下：
+ DELETE FROM books WHERE num=0;
+Query OK, 2 rows affected (0.00 sec)
+语句执行成功，查看操作结果：
+ SELECT * FROM books WHERE num=0;
+Empty set (0.00 sec)
+可以看到，查询结果为空，表中已经没有库存量为0的记录。

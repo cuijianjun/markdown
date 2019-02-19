@@ -1,0 +1,15 @@
+步骤1：登陆数据库：
+mysql -h localhost -u root -p
+
+步骤2：创建数据库zoo：
+CREATE DATABASE zoo;
+SHOW DATABASES;
+
+步骤3：选择当前数据库为zoo：
+USE zoo;
+
+查看数据库zoo的信息：
+SHOW CREATE DATABASE zoo \G;
+
+步骤4：删除数据库zoo：
+DROP DATABASE zoo;

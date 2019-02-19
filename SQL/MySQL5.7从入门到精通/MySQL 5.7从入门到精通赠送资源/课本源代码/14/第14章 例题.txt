@@ -1,0 +1,137 @@
+/***************************样例表***************************/
+CREATE DATABASE booksDB;
+user booksDB;
+
+CREATE TABLE books
+(
+  bk_id  INT NOT NULL PRIMARY KEY,
+  bk_title VARCHAR(50) NOT NULL,
+  copyright YEAR NOT NULL
+);
+INSERT INTO books
+VALUES (11078, 'Learning MySQL', 2010),
+(11033, 'Study Html', 2011),
+(11035, 'How to use php', 2003),
+(11072, 'Teach youself javascript', 2005),
+(11028, 'Learing C++', 2005),
+(11069, 'MySQL professional', 2009),
+(11026, 'Guide to MySQL 5.5', 2008),
+(11041, 'Inside VC++', 2011);
+
+CREATE TABLE authors
+(
+  auth_id     INT NOT NULL PRIMARY KEY,
+  auth_name  VARCHAR(20),
+ auth_gender CHAR(1)
+);
+INSERT INTO authors  
+VALUES (1001, 'WriterX' ,'f'),
+(1002, 'WriterA' ,'f'),
+(1003, 'WriterB' ,'m'),
+(1004, 'WriterC' ,'f'),
+(1011, 'WriterD' ,'f'),
+(1012, 'WriterE' ,'m'),
+(1013, 'WriterF' ,'m'),
+(1014, 'WriterG' ,'f'),
+(1015, 'WriterH' ,'f');
+
+CREATE TABLE authorbook
+(
+  auth_id  INT NOT NULL,
+  bk_id   INT NOT NULL,
+  PRIMARY KEY (auth_id, bk_id),
+  FOREIGN KEY (auth_id) REFERENCES authors (auth_id),
+  FOREIGN KEY (bk_id) REFERENCES books (bk_id)
+);
+
+INSERT INTO authorbook
+VALUES (1001, 11033), (1002, 11035), (1003, 11072), (1004, 11028),
+(1011, 11078), (1012, 11026), (1012, 11041), (1014, 11069);
+
+/***************************样例表***************************/
+
+
+【例14.1】使用mysqldump命令备份数据库中的所有表
+mysqldump -u root -p booksdb > C:/backup/booksdb_20110101.sql
+
+【例14.2】备份booksDB数据库中的books表
+mysqldump -u root -p booksDB books > C:/backup/books_20110101.sql
+
+【例14.3】使用mysqldump备份booksDB和test数据库
+mysqldump -u root -p --databases  booksDB test> C:\backup\books_testDB_20110101.sql
+
+【例14.4】使用mysqldump备份服务器中的所有数据库
+mysqldump  -u root -p --all-databases > C:/backup/alldbinMySQL.sql
+
+【例14.5】使用mysqlhotcopy备份test数据库到/usr/backup目录下
+mysqlhotcopy  -u root -p test /usr/backup
+
+【例14.6】使用mysql命令将C:\backup\booksdb_20110101.sql文件中的备份导入到数据库中
+mysql -u root-p booksDB < C:/backup/booksdb_20110101.sql 
+
+【例14.7】使用root用户登录到服务器，然后使用souce导入本地的备份文件booksdb_20110101.sql
+use booksdb;
+source C:/backup/booksdb_20110101.sql
+
+【例14.8】从mysqlhotcopy拷贝的备份恢复数据库
+cp –R  /usr/backup/test usr/local/mysql/data
+
+【例14.9】将www.abc.com主机上的MySQL数据库全部迁移到www.bcd.com主机上。在www.abc.com主机上执行的命令如下：
+mysqldump -h www.bac.com -uroot -ppassword  dbname | 
+mysql -hwww.bcd.com -uroot -ppassword
+
+【例14.10】使用SELECT...INTO OUTFILE将test数据库中的person表中的记录导出到文本文件
+SELECT *  FROM test.person INTO OUTFILE "C:/person0.txt";
+
+【例14.11】使用SELECT...INTO OUTFILE将test数据库中的person表中的记录导出到文本文件，使用FIELDS选项和LINES选项，要求字段之间使用逗号‘,’间隔，所有字段值用双引号括起来，定义转义字符定义为单引号‘\’’
+SELECT * FROM test.person INTO OUTFILE "C:/person1.txt"
+  FIELDS 
+    TERMINATED BY ','
+    ENCLOSED BY '\"'
+    ESCAPED BY '\''
+  LINES 
+    TERMINATED BY '\r\n';
+
+【例14.12】使用SELECT...INTO OUTFILE将test数据库中的person表中的记录导出到文本文件，使用LINES选项，要求每行记录以字符串“> ”开始，以“<end>”字符串结尾
+SELECT * FROM test.person INTO OUTFILE "C:/person2.txt"
+  LINES 
+    STARTING BY '> '
+    TERMINATED BY '<end>';
+
+SELECT * FROM test.person INTO OUTFILE "C:/person2.txt"
+  LINES 
+    STARTING BY '> '
+    TERMINATED BY '<end>\r\n';
+
+【例14.13】使用mysqldump将test数据库中的person表中的记录导出到文本文件
+mysqldump -T C:/ test person -u root -p
+
+【例14.14】使用mysqldump命令将test数据库中的person表中的记录导出到文本文件，使用FIELDS选项，要求字段之间使用逗号‘,’间隔，所有字符类型字段值用双引号括起来，定义转义字符定义为问号‘?’，每行记录以回车换行符“\r\n”结尾
+mysqldump -T C:\backup test person -u root -p --fields-terminated-by=, --fields-optionally-enclosed-by=\" --fields-escaped-by=? --lines-terminated-by=\r\n
+
+【例14.15】使用mysql语句导出test数据库中person表中的记录到文本文件
+mysql -u root -p --execute="SELECT * FROM person;" test > C:\person3.txt
+
+【例14.16】使用mysql命令导出test数据库中person表中的记录到文本文件，使用--vertical参数显示结果
+mysql -u root -p --vertical --execute="SELECT * FROM person;" test > C:\person4.txt
+
+【例14.17】使用mysql命令导出test数据库中person表中的记录到html文件
+mysql -u root -p --html --execute="SELECT * FROM person;" test > C:\person5.html
+
+【例14.18】使用mysql命令导出test数据库中person表中的记录到xml文件
+mysql -u root -p --xml --execute="SELECT * FROM person;" test > C:\person6.xml
+
+【例14.19】使用LOAD DATA命令将C:\person0.txt文件中的数据导入到test数据库中的person表
+LOAD DATA  INFILE 'C:/person0.txt' INTO TABLE test.person;
+
+【例14.20】使用LOAD DATA命令将C:\person1.txt文件中的数据导入到test数据库中的person表，使用FIELDS选项和LINES选项，要求字段之间使用逗号‘,’间隔，所有字段值用双引号括起来，定义转义字符定义为单引号‘\’’
+LOAD DATA  INFILE 'C:/person1.txt' INTO TABLE test.person
+  FIELDS 
+    TERMINATED BY ','
+    ENCLOSED BY '\"'
+    ESCAPED BY '\''
+  LINES 
+    TERMINATED BY '\r\n';
+
+【例14.21】使用mysqlimport命令将C:\backup目录下的person.txt文件内容导入到test数据库中，字段之间使用逗号‘,’间隔，字符类型字段值用双引号括起来，定义转义字符定义为问号‘?’，每行记录以回车换行符“\r\n”结尾
+mysqlimport -u root -p test C:/backup/person.txt --fields-terminated-by=, --fields-optionally-enclosed-by=\" --fields-escaped-by=? --lines-terminated-by=\r\n

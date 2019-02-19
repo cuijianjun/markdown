@@ -1,0 +1,14 @@
+查看当前所有存在的数据库
+SHOW databases;
+
+【例3.1】创建测试数据库test_db，
+CREATE DATABASE test_db;
+
+【例3.2】查看创建好的数据库test_db的定义，
+SHOW CREATE DATABASE test_db\G;
+
+【例3.3】删除测试数据库test_db，
+DROP DATABASE test_db;
+
+查看存储引擎
+SHOW ENGINES \G;

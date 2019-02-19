@@ -1,0 +1,17 @@
+步骤1：分析查询语句，理解索引对查询速度的影响。
+1.使用分析查询语句“SELECT * FROM fruits WHERE f_name='banana';”，执行的语句及执行结果如下：
+EXPLAIN SELECT * FROM fruits WHERE f_name='banana';
+
+2.使用分析查询语句“SELECT * FROM fruits WHERE f_name like '%na'”，执行的语句及执行结果如下：
+EXPLAIN SELECT * FROM fruits WHERE f_name like '%na';
+
+3．使用EXPLAIN分析查询语句下面执行“SELECT * FROM fruits WHERE f_name like 'ba%';”语句如下：
+EXPLAIN SELECT * FROM message WHERE title like ' ba%';
+
+
+步骤2：练习分析表、检查表、优化表。
+1．使用ANALYZE TABLE语句分析fruits表，执行的语句及结果如下：
+ANALYZE TABLE fruits;
+
+2．使用CHECK TABLE语句检查表fruits，执行的语句及结果如下：
+CHECK TABLE fruits;

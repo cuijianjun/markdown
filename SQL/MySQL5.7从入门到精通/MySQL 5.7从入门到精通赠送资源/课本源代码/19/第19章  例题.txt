@@ -1,0 +1,377 @@
+[19.2]  Linux环境下MySQL Cluster安装和配置
+
+步骤1: 系统默认的网卡端口是eth0，这里使用的是eth2，首先编辑eth2的配置文件，设置IP地址、子网掩码和网关的配置信息。
+[root@localhost ~]# cd /etc/sysconfig/network-scripts/
+[root@localhost network-scripts]# vi ifcfg-eth2
+
+步骤2: 使用ifconfig命令查看eth2端口IP地址是否成功设置，然后重新启动网络。
+[root@localhost network-scripts]# ifconfig eth2
+[root@localhost network-scripts]# service network restart
+ 
+步骤3: 使用chkconfig命令设置网卡进入系统时启动。想要每次开机就可以自动获取IP地址，此时需要开启服务，使用chkconfig命令是让网络服务在系统启动级别是2345时默认启动。
+[root@localhost network-scripts]# chkconfig --level 2345 network on
+[root@localhost network-scripts]# service network start
+ 
+步骤4: 将NetworkManager服务关闭掉，然后重启网络服务。
+[root@localhost network-scripts]# chkconfig --level 0123456 NetworkManager off
+[root@localhost network-scripts]# service NetworkManager stop 
+[root@localhost network-scripts]# service network stop 
+[root@localhost network-scripts]# service network start
+[root@localhost ~]# ifconfig 
+[root@localhost ~]# ping 192.168.0.101
+
+[19.2.1] 安装MySQL Cluster7.2.8软件
+
+步骤1: 直接把之前源码安装的MySQL程序删除掉。
+[root@localhost mysql]# cd /usr/local
+[root@localhost local]# ls 
+[root@localhost local]# rm -rf mysql
+ 
+步骤2: 登录http://dev.mysql.com/downloads/cluster/#downloads网址，下载MySQL Cluster 7.2.8
+
+步骤3: 下载好mysql-cluster-gpl-7.2.8-linux2.6-i686.tar.gz文件之后，先对其进行解压缩。
+[root@localhost ~]# gunzip  mysql-cluster-gpl-7.2.8-linux2.6-i686.tar.gz
+[root@localhost ~]# tar -xvf mysql-cluster-gpl-7.2.8-linux2.6-i686.tar 
+
+步骤4: 假设每个节点计算机上都采用mysql用户来运行MySQL Cluster，首先添加mysql组，然后添加mysql用户。
+[root@localhost ~]# groupadd mysql
+[root@localhost ~]# useradd mysql -g mysql
+
+步骤5: 开始安装MySQL Cluster。
+[root@localhost ~]# mkdir /usr/local/mysql-cluster
+[root@localhost ~]# mv mysql-cluster-gpl-7.2.8-linux2.6-i686/*
+  /usr/local/mysql-cluster/
+[root@localhost ~]# cd /usr/local/mysql-cluster
+[root@localhost mysql-cluster]# chown -R root .
+[root@localhost mysql-cluster]# ls
+[root@localhost mysql-cluster]# chown -R mysql ./data
+[root@localhost mysql-cluster]# chown -R mysql .
+[root@localhost mysql-cluster]# ./scripts/mysql_install_db --user=mysql
+
+提示错误信息：libaio.so.1: cannot open shared object file: No such file or directory。安装过程中可能缺少的 libaio 安装文件而导致的问题，接下来，安装该程序，操作如下。
+[root@localhost ~]# rpm -ivh libaio-0.3.96-3.i386.rpm
+[root@localhost ~]# cd /usr/local/mysql-cluster/
+[root@localhost mysql-cluster]# ./scripts/mysql_install_db --user=mysql
+
+步骤6: 从上面安装信息可以发现To start mysqld at boot time you have to copy support-files/mysql.server to the right place for your system，接下来，首先创建my.cnf文件，并且开始初始化数据库，接着需要配置mysql服务，然后启动服务。
+[root@localhost mysql-cluster]# cp ./support-files/my-medium.cnf /etc/my.cnf
+cp: overwrite `/etc/my.cnf'? y
+[root@localhost mysql-cluster]# 
+[root@localhost mysql-cluster]# cd /etc/init.d
+[root@localhost init.d]# ln –s
+ /usr/local/mysql-cluster/support-files/mysql.server /etc/init.d/mysql.server
+
+步骤7: 设置MySQL服务为自动启动服务。
+[root@localhost ~]# cd /usr/local
+[root@localhost local]# ln -s mysql-cluster mysql
+接下来编辑/etc/profile环境配置文件，在该文件最后加上如下的两句配置信息。
+[root@localhost ~]# vi /etc/profile
+PATH=$PATH:/usr/local/mysql-cluster/bin
+export PATH
+
+步骤8: 使用chkconfig 增加新的一项服务，系统从其之后服务自动运行。
+[root@localhost ~]# cd /etc/rc.d/init.d/
+[root@localhost init.d]# ls -al |grep mysql
+lrwxrwxrwx  1 root root    51 2012-10-27 12:35 mysql.server -> /usr/local/mysql-cluster/support-files/mysql.server
+[root@localhost init.d]# chkconfig --add mysql.server
+[root@localhost local]# service mysql.server start
+
+步骤9: 简单的测试下当前的MySQL版本是否支持Cluster。
+[root@localhost init.d]# mysql
+mysql> show variables like '%ndb%';
+
+[19.2.2] 管理节点配置步骤
+
+步骤1: 拷贝/usr/local/mysql-cluster/bin/ndb_mgm,ndb_mgmd两个文件到/usr/local/bin目录下面去。
+[root@localhost ~]# cd /usr/local/mysql-cluster/bin/
+[root@localhost bin]# cp ./ndb_mgm* /usr/local/bin
+
+步骤2: 在管理节点服务器192.168.0.10的/var/lib/下创建目录mysql-cluster，并在该目录下面创建配置文件config.ini。
+[root@localhost ~]# cd /var/lib
+[root@localhost lib]# mkdir mysql-cluster
+[root@localhost lib]# cd mysql-cluster/
+[root@localhost mysql-cluster]# touch config.ini
+
+步骤3: 配置集群的测试环境，config.ini文件的配置信息如下。
+[ndbd default]
+NoOfReplicas=1 						#每个数据节点的镜像数量
+DataMemory=200M  					#每个数据节点中给数据分配的内存
+IndexMemory=20M 					#每个数据节点中给索引分配的内存
+[ndb_mgmd]  						#配置管理节点
+NodeId=1
+hostname=192.168.0.100
+datadir=/var/lib/mysql-cluster/ 	#管理节点数据(日志)目录
+[ndbd]								#数据节点配置
+NodeId=2
+hostname=192.168.0.101
+datadir=/usr/local/mysql/data/		#数据节点目录
+[ndbd]
+NodeId=3
+hostname=192.168.0.102
+datadir=/usr/local/mysql/data/
+[mysqld]
+hostname=192.168.0.101
+[mysqld]
+hostname=192.168.0.102
+[mysqld] 							# Options for mysqld process
+
+
+[19.2.3] 配置SQL节点和数据节点
+SQL节点和数据节点的配置比较简单，只需要在MySQL Server的配置文件 my.cnf 中增加如下内容即可 
+
+# The MySQL server
+[mysql_cluster]
+ndb-connectstring=192.168.0.100		#数据节点定位管理节点的IP地址
+	
+[mysqld]
+Ndbcluster							#运行NDB存储引擎
+ndb-connectstring=192.168.0.100		#定位管理节点
+port		= 3306
+socket		= /tmp/mysql.sock
+skip-external-locking
+key_buffer_size = 16M
+max_allowed_packet = 1M
+table_open_cache = 64
+sort_buffer_size = 512K
+net_buffer_length = 8K
+read_buffer_size = 256K
+read_rnd_buffer_size = 512K
+myisam_sort_buffer_size = 8M
+
+
+[19.3.1]  Cluster的启动 
+
+步骤1: 在管理节点(192.168.0.100)上使用ndb_mgmd命令启动管理节点进程。
+[root@localhost ~]# cd /var/lib/mysql-cluster/
+[root@localhost mysql-cluster]# ndb_mgmd -f ./config.ini
+MySQL Cluster Management Server mysql-5.5.27 ndb-7.2.8 
+[root@localhost mysql-cluster]# ps -ef |grep ndb
+ 
+步骤2: 启动IP地址为192.168.0.101和192.168.0.102的数据节点服务器服务，如果是第一次启动，则需要添加--initial参数，以便进行ndb节点的初始化工作。值得注意的是，在以后的启动过程中，是不能添加--initial参数的，否则ndbd程序会清除在之前建立的所有用于恢复的数据文件盒日志文件，如下所示。
+[root@localhost bin]# ndbd --initial
+
+启动数据节点发生问题，连接不上，尝试关闭操作系统防火墙。
+[root@localhost ~]# /etc/init.d/iptables stop 
+[root@localhost ~]# /sbin/chkconfig --level 2345 iptables off
+
+下面重新启动数据节点，效果如下所示。
+[root@localhost bin]# ndbd --initial
+
+步骤3: 启动IP地址为192.168.0.101和192.168.0.102的SQL节点服务器服务，如下所示。
+[root@localhost local]# service mysql.server start
+
+步骤4: 节点全部成功启动之后，用ndb_mgm工具查看集群的状态。
+[root@localhost ~]# ndb_mgm 
+ndb_mgm> show
+
+
+19.3.2  Cluster的测试
+
+1. 测试NDB数据引擎
+步骤1: 在其中一个IP地址为192.168.0.101的SQL节点的test库中创建存储引擎为NDB的表t，然后插入两条数据。
+mysql> use test;
+Database changed
+mysql> create table t(
+    ->   data integer
+    -> )engine = ndb; 
+	
+mysql> insert into t values(1);  
+mysql> insert into t values(2);
+
+步骤2: 在其中一个IP地址为192.168.0.102中查询test库中的t1表，看下两个SQL节点的数据是否是一致的。
+mysql> select * from t;
+
+步骤3: 在SQL节点192.168.0.101上将测试表t的存储引擎改为MyISAM，再次插入测试输入，执行如下。
+mysql> alter table t engine=myisam;  
+mysql> insert into t values(3);
+
+步骤4: 在SQL节点192.168.0.102上重新查询表t,如下。
+mysql> select * from t;
+
+步骤5: 在SQL节点192.168.0.101上将测试表t的存储引擎改为NDB，如下。
+mysql> alter table t engine=ndb;
+ 
+步骤6: 在SQL节点192.168.0.102上再次查询表t，结果如下。
+mysql> select * from t;
+
+2. SQL节点故障测试
+
+步骤1: 将IP地址为192.168.0.101服务器上的MySQL服务停止。
+[root@localhost mysql-cluster]# service mysql.server stop
+
+步骤2: 用ndb_mgm工具查看集群的状态。
+[root@localhost ~]# ndb_mgm 
+ndb_mgm> show
+
+步骤3: 在IP地址为192.168.0.102的计算机上查看表t1。
+mysql> select * from t;
+
+
+19.3.3 Cluster的关闭
+MySQL Cluster关闭只需要使用ndb_mgm命令。执行如下所示。
+[root@localhost mysql-cluster]# ndb_mgm -e shutdown
+
+同时也可以使用ndb_mgm工具进入管理界面后，使用shutdown命令。执行如下所示。
+[root@localhost mysql-cluster]# ndb_mgm
+ndb_mgm> shutdown
+
+
+19.4 维护MySQL Cluster
+
+[root@localhost ~]# ndb_mgm
+-- NDB Cluster -- Management Client --
+ndb_mgm> show
+ndb_mgm> help
+
+也可以通过在help 后面接命令的名称，获取该命令的相关信息，如下所示。
+ndb_mgm> help status
+
+
+19.4.1  Cluster的日志的管理
+MySQL Cluster提供了两种日志，集群日志(clusterlog)主要是用来记录所有Cluster节点生
+成的日志，节点日志(node log)记录了数据节点的本地时间。通常采用集群日志，集群日志记录了所有节点的数据，更方便进行管理，集群日志记录在config.ini同一个目录下面，测试环境是在/var/lib/mysql-cluster/目录下面，文件格式为ndb_<nodeid>_cluster.log，详细信息如下所示。
+
+[root@localhost mysql-cluster]# cd /var/lib/mysql-cluster/
+[root@localhost mysql-cluster]# ls
+config.ini  ndb_1_cluster.log  ndb_1_out.log  ndb_1.pid
+[root@localhost mysql-cluster]# cat ndb_1_cluster.log
+
+通常可以使用ndb_mgm客户端管理日志信息，如下所示。
+
+步骤1: 在终端执行ndb_mgm命令，输入clusterlog info命令查询当前日志状态。
+[root@localhost ~]# cd /var/lib/mysql-cluster/
+[root@localhost mysql-cluster]# ndb_mgm 
+ndb_mgm> clusterlog info
+
+步骤2: 执行clusterlog off命令关闭日志。
+ndb_mgm> clusterlog off
+ndb_mgm> clusterlog info
+
+步骤3: 执行clusterlog on命令开启日志。
+ndb_mgm> clusterlog on 
+ndb_mgm> clusterlog info
+
+[19.4.2]  Cluster的联机备份
+
+使用管理服务器进行Cluster物理备份，首先需要启动管理服务器(ndb_mgm)，并执行”start backup”命令启动备份，具体执行如下所示。
+ndb_mgm> start backup; 
+如果在备份的过程中想终止备份可以使用如下的命令。
+[root@localhost mysql-cluster]# ndb_mgm 
+ndb_mgm> abort backup node_id 
+
+在IP地址为192.168.0.101的数据节点下，可以看到以下的数据文件。
+[root@localhost ~]# cd /usr/local/mysql/data/BACKUP/BACKUP-1
+[root@localhost BACKUP-1]#ls 
+在IP地址为192.168.0.102的数据节点下，可以看到以下的数据文件。
+[root@localhost ~]# cd /usr/local/mysql/data/BACKUP/BACKUP-1
+[root@localhost BACKUP-1]#ls 
+
+
+[19.4.3]  Cluster的数据恢复
+
+步骤1: 备份之前，首先创建测试表t,然后添加若干条记录，如下所示。
+mysql> select count(*) from t;
+
+步骤2: 在管理节点上执行start backup进行数据备份。
+ndb_mgm> start backup;
+
+步骤3: 在IP地址为192.168.0.101的数据节点上执行如下数据还原的命令，如下所示。
+[root@localhost mysql-cluster]# ndb_restore -b 3 -n 2 -c host=192.168.0.100:1186 –m –r /usr/local/mysql/data/BACKUP/BACKUP-3
+
+步骤4: 在IP地址为192.168.0.102的数据节点上执行如下数据还原的命令，如下所示。
+[root@localhost mysql-cluster]# ndb_restore -b 3 -n 3 -c host=192.168.0.100:1186 –m –r /usr/local/mysql/data/BACKUP/BACKUP-3
+
+
+
+19.5  Wndows操作系统中配置Cluster集群
+
+步骤1: MySQL Cluster的下载
+配置集群需要使用MySQL Cluster满足集群要求，MySQL Cluster支持Linux、Mac OS X、Solaris和Windows操作系统。
+MySQL Cluster的下载地址是http://www.mysql.com/downloads/cluster
+
+步骤2: 管理节点的安装配置
+管理节点安装在C盘下，在IP地址为192.168.0.208的机器上创建目录c:/mysql/bin、c:/mysql/mysql-cluster和c:/mysql/bin/cluster-logs目录,然后将安装包解压后的mysql/bin目录中的ndb_mgmd.exe和ndb_mgm.exe复制到IP地址为192.168.0.208的c:/mysql/bin目录下。然后在192.168.0.208的c:/mysql/bin下生成my.ini和config.ini两个文件。
+my.ini的配置信息如下：
+[mysql_cluster]
+#Option for management node process
+config-file=C:/mysql/bin/config.ini
+config.ini的配置信息如下：
+[ndbd default]
+NoOfReplicas=2 				    			#每个数据节点的镜像数量
+DataDir=D:/Program Files/mysqlcluster/datanode/mysql/bin/cluster-data 
+DataMemory=80M                              #每个数据节点中给数据分配的内存
+IndexMemory=18M                             #每个数据节点中给索引分配的内存
+
+[ndb_mgmd]
+HostName=192.168.0.208 			    		#管理节点的IP地址
+DataDir=C:/mysql/bin/cluster-logs           #管理节点日志文件的目录 
+
+[ndbd]
+HostName=192.168.0.102 			    		#192.168.0.102的主机作为数据节点
+
+[ndbd]
+HostName=192.168.0.206                      #192.168.0.206的主机作为数据节点
+
+
+[mysqld]
+HostName=192.168.0.102                      #192.168.0.102的主机作为SQL节点
+[mysqld]
+HostName=192.168.0.206                      #192.168.0.206的主机作为SQL节点
+
+步骤3: 数据节点的安装配置
+将IP地址为192.168.0.102和192.168.0.206的两台机器同时作为SQL节点，在IP地址为192.168.0.206的计算机上创建以下目录结构。
+D:/Program Files/mysqlcluster/datanode/mysql/bin
+D:/Program Files/mysqlcluster/datanode/mysql/cluster-data
+D:/Program Files/mysqlcluster/datanode/mysql/bin/cluster-data
+
+此时需要在下载的目录解压之后的文件mysql/bin中将ndbd.exe复制到192.168.0.206的D:/Program Files/mysqlcluster/datanode/mysql/bin目录下。接下来需要在该目录（D:/Program Files/mysqlcluster/datanode/mysql/bin）下创建my.ini文件，my.ini的配置信息如下：
+[mysql_cluster]
+ndb-connectstring=192.168.0.208				#定位管理节点
+
+步骤4: SQL节点的安装配置
+在IP地址为192.168.0.206的计算机上创建D:/Program Files/mysqlcluster/sqlnode目录，然后将下载解压后的文件夹mysql直接整个复制到D:/Program Files/mysqlcluster/sqlnode目录下面，然后在D:/Program Files/mysqlcluster/sqlnode/mysql下面创建my.ini文件，my.ini的配置信息如下：
+[mysqld]
+ndbcluster	  								#运行 NDB存储引擎
+ndb-connectstring=192.168.0.208				#定位管理节点
+
+步骤5: 启动管理节点
+启动各个节点是有顺序的，先是Management node，然后是Data nodes，最后是SQL nodes。
+首先在IP地址为192.168.0.208的主机上打开命令窗口，切换到C:\mysql\bin目录下面，输入：
+C:\Documents and Settings\Administrator>cd c:\mysql\bin
+C:\mysql\bin>ndb_mgmd -f config.ini --configdir=c:\mysql\mysql-cluster
+ 
+步骤6: 启动数据节点
+在IP地址为192.168.0.206的主机中打开一个新的命令行窗口，切换到目录D:/Program Files/mysqlcluster/datanode/mysql/bin，输入如下命令：
+D:\Program Files\mysqlcluster\datanode\mysql\bin>ndbd -c 192.168.0.208 
+下面在IP地址为192.168.0.208的主机上使用ndb_mgm命令测试发现没有成功连接上数，如下：
+C:\mysql\bin>ndb_mgm 
+ndb_mgm> all status
+ 
+步骤7: 启动SQL节点
+在IP地址为192.168.0.206的主机中打开一个新的命令行窗口，切换到目录D:/Program Files/mysqlcluster/sqlnode/mysql/bin，输入如下命令：
+D:\Program Files\mysqlcluster\sqlnode\mysql\bin>mysqld --console
+
+接下来，可以在管理节点192.168.0.208这台计算机上，在命令窗口切换到c:/mysql/bin目录下输入以下命令来检测数据节点和SQL节点是否成功连接，如下所示：
+C:\mysql\bin>ndb_mgm
+-- NDB Cluster -- Management Client --
+ndb_mgm> show
+
+步骤8: 下面进行简单的SQL节点数据同步测试
+首先，在IP地址为192.168.0.102机器上面登录MySQL Server，然后创建数据引擎为ndb的测试表t，并添加一条记录，如下所示。
+D:\Program Files\mysqlcluster\sqlnode\mysql\bin>mysql 
+mysql> use test;
+mysql> show tables;
+mysql> create table t(
+    ->   id integer,
+    ->   data varchar(20)
+    -> )engine=ndb;
+mysql> insert into t values(1,'a');
+mysql> commit; 
+mysql>
+
+接下来，登录IP地址为192.168.0.206的计算机，查看节点数据是否同步，如下所示。
+D:\Program Files\mysqlcluster\sqlnode\mysql\bin>mysql
+mysql> use test;
+mysql> show tables;
+mysql> show tables;
+mysql> select * from t;

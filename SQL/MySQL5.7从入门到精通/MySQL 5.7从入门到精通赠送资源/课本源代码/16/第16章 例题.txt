@@ -1,0 +1,74 @@
+【例16.1】使用EXPLAIN语句来分析一个查询语句
+EXPLAIN SELECT * FROM fruits;
+
+【例16.2】下面是查询语句中不使用索引和使用索引的对比。
+EXPLAIN SELECT * FROM fruits WHERE f_name='apple';  /*分析未使用索引时的查询情况*/
+CREATE INDEX index_name ON fruits(f_name);          /*创建索引*/
+EXPLAIN SELECT * FROM fruits WHERE f_name='apple';  /*分析使用索引时的查询情况*/
+
+【例16.3】查询语句中使用LIKE关键字，并且匹配的字符串中含有‘%’符，EXPLAIN语句执行如下：
+EXPLAIN SELECT * FROM fruits WHERE f_name like '%x';
+EXPLAIN SELECT * FROM fruits WHERE f_name like 'x%';
+
+【例16.4】本例在表fruits中f_id、f_price字段创建多列索引，验证多列索引的使用情况。
+CREATE INDEX index_id_price ON fruits(f_id, f_price);
+EXPLAIN SELECT * FROM fruits WHERE f_id='l2';
+EXPLAIN SELECT * FROM fruits WHERE f_price=5.2;
+
+【例16.5】查询语句使用OR关键字的情况：
+EXPLAIN SELECT * FROM fruits WHERE f_name='apple' or s_id=101 \G;
+EXPLAIN SELECT * FROM fruits WHERE f_name='apple' or f_id='l2' \G;
+
+【例16.6】下面的会员表（members）主要用来存储会员登录认证信息，
+CREATE TABLE members (
+  Id int(11) NOT NULL AUTO_INCREMENT,
+  username varchar(255) DEFAULT NULL ,
+  password varchar(255) DEFAULT NULL ,
+  last_login_time datetime DEFAULT NULL ,
+  last_login_ip varchar(255) DEFAULT NULL ,
+  PRIMARY KEY (Id)
+) ;
+
+
+CREATE TABLE members_detail (
+  member_id int(11) NOT NULL DEFAULT 0,
+  address varchar(255) DEFAULT NULL ,
+  telephone varchar(16) DEFAULT NULL ,
+  description text
+) ;
+
+SELECT * FROM members LEFT JOIN members_detail ON members.id=members_detail.member_id
+
+【例16.7】会员信息表和会员组信息表如下：
+CREATE TABLE vip(
+  Id int(11) NOT NULL AUTO_INCREMENT,
+  username varchar(255) DEFAULT NULL,
+  password varchar(255) DEFAULT NULL,
+  groupId INT(11) DEFAULT 0,
+  PRIMARY KEY (Id)
+) ;
+
+
+CREATE TABLE vip_group (
+  Id int(11) NOT NULL AUTO_INCREMENT,
+  name varchar(255) DEFAULT NULL,
+  remark varchar(255) DEFAULT NULL,
+  PRIMARY KEY (Id)
+) ;
+
+CREATE TABLE temp_vip (
+  Id int(11) NOT NULL AUTO_INCREMENT,
+  user_name varchar(255) DEFAULT NULL,
+  group_name varchar(255) DEFAULT NULL,
+  group_remark varchar(255) DEFAULT NULL,
+  PRIMARY KEY (Id)
+);
+
+INSERT INTO temp_vip(user_name, group_name, group_remark)
+SELECT v.username,g.name,g.remark 
+FROM vip as v ,vip_group as g
+WHERE v.groupId=g.Id;
+
+
+【例16.8】使用ANALYZE TABLE来分析message表，执行的语句及结果如下：
+ANALYZE TABLE fruits;
